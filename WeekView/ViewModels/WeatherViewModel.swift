@@ -40,7 +40,7 @@ class WeatherViewModel: NSObject, ObservableObject {
 
 extension WeatherViewModel: CLLocationManagerDelegate {
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.first else { return }
+        guard let location = locations.last else { return }
         
         Task { @MainActor in
             if currentLocation == nil {
