@@ -128,7 +128,12 @@ class CalendarViewModel: ObservableObject {
             // Choose predicate based on showCompletedReminders setting
             let predicate: NSPredicate
             if showCompletedReminders {
-                predicate = eventStore.predicateForReminders(in: reminderListsToUse)
+                // Fetch completed reminders within the date range
+                predicate = eventStore.predicateForCompletedReminders(
+                    withCompletionDateStarting: startOfDay,
+                    ending: endOfDay,
+                    calendars: reminderListsToUse
+                )
             } else {
                 predicate = eventStore.predicateForIncompleteReminders(
                     withDueDateStarting: startOfDay, ending: endOfDay, calendars: reminderListsToUse
@@ -141,18 +146,17 @@ class CalendarViewModel: ObservableObject {
                 }
             }
             
-            // Filter by date and completion status
+            // For completed reminders, filter by completion date; for incomplete, filter by due date
             let filteredReminders = fetched.filter { reminder in
-                // Check if reminder has a due date in the specified range
-                guard let dueDate = reminder.dueDateComponents?.date else { return false }
-                let isInRange = dueDate >= startOfDay && dueDate < endOfDay
-                
-                // If showCompletedReminders is false, only incomplete reminders should show
-                if !showCompletedReminders {
-                    return isInRange && !reminder.isCompleted
+                if showCompletedReminders {
+                    // For completed reminders, check completion date
+                    guard let completionDate = reminder.completionDate else { return false }
+                    return completionDate >= startOfDay && completionDate < endOfDay
+                } else {
+                    // For incomplete reminders, check due date
+                    guard let dueDate = reminder.dueDateComponents?.date else { return false }
+                    return dueDate >= startOfDay && dueDate < endOfDay && !reminder.isCompleted
                 }
-                
-                return isInRange
             }
             
             reminders = filteredReminders.map { ReminderModel(from: $0) }

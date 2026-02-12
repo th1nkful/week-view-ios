@@ -184,44 +184,30 @@ struct InfiniteDayScrollView: View {
                     .onChange(of: calendarViewModel.hasCalendarAccess) { oldValue, newValue in
                         if newValue && !hasInitializedWithPermissions {
                             hasInitializedWithPermissions = true
-                            Task {
-                                // Clear cached events
-                                loadedEvents.removeAll()
-                                // Reload all visible dates
-                                for date in visibleDates {
-                                    await loadEventsForDate(date, forceReload: true)
-                                }
-                            }
+                            reloadAllVisibleDates()
                         }
                     }
                     .onChange(of: settingsViewModel.selectedCalendarIds) { _, _ in
-                        Task {
-                            // Clear cached events and reload
-                            loadedEvents.removeAll()
-                            for date in visibleDates {
-                                await loadEventsForDate(date, forceReload: true)
-                            }
-                        }
+                        reloadAllVisibleDates()
                     }
                     .onChange(of: settingsViewModel.selectedReminderListIds) { _, _ in
-                        Task {
-                            // Clear cached events and reload
-                            loadedEvents.removeAll()
-                            for date in visibleDates {
-                                await loadEventsForDate(date, forceReload: true)
-                            }
-                        }
+                        reloadAllVisibleDates()
                     }
                     .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
-                        Task {
-                            // Clear cached events and reload
-                            loadedEvents.removeAll()
-                            for date in visibleDates {
-                                await loadEventsForDate(date, forceReload: true)
-                            }
-                        }
+                        reloadAllVisibleDates()
                     }
                 }
+            }
+        }
+    }
+    
+    private func reloadAllVisibleDates() {
+        Task {
+            // Clear cached events
+            loadedEvents.removeAll()
+            // Reload all visible dates
+            for date in visibleDates {
+                await loadEventsForDate(date, forceReload: true)
             }
         }
     }

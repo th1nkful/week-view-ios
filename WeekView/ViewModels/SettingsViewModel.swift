@@ -26,11 +26,13 @@ class SettingsViewModel: ObservableObject {
         // If no calendars are selected, select all by default
         if selectedCalendarIds.isEmpty {
             selectedCalendarIds = Set(availableCalendars.map { $0.calendarIdentifier })
+            saveSettings()
         }
         
         // If no reminder lists are selected, select all by default
         if selectedReminderListIds.isEmpty {
             selectedReminderListIds = Set(availableReminderLists.map { $0.calendarIdentifier })
+            saveSettings()
         }
     }
     
