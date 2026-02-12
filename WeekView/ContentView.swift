@@ -3,7 +3,9 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var calendarViewModel = CalendarViewModel()
     @StateObject private var weatherViewModel = WeatherViewModel()
+    @StateObject private var settingsViewModel = SettingsViewModel()
     @State private var selectedDate = Date()
+    @State private var showSettings = false
     
     var body: some View {
         NavigationStack {
@@ -27,6 +29,14 @@ struct ContentView: View {
                         .foregroundStyle(.red)
                     
                     Spacer()
+                    
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gear")
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -46,8 +56,12 @@ struct ContentView: View {
                 
                 InfiniteDayScrollView(
                     selectedDate: $selectedDate,
-                    calendarViewModel: calendarViewModel
+                    calendarViewModel: calendarViewModel,
+                    settingsViewModel: settingsViewModel
                 )
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView(viewModel: settingsViewModel)
             }
             .task {
                 await calendarViewModel.requestAccess()
@@ -61,6 +75,7 @@ struct ContentView: View {
 struct InfiniteDayScrollView: View {
     @Binding var selectedDate: Date
     @ObservedObject var calendarViewModel: CalendarViewModel
+    @ObservedObject var settingsViewModel: SettingsViewModel
     
     @State private var visibleDates: [Date] = []
     @State private var loadedEvents: [Date: (events: [EventModel], reminders: [ReminderModel])] = [:]
@@ -177,6 +192,33 @@ struct InfiniteDayScrollView: View {
                             }
                         }
                     }
+                    .onChange(of: settingsViewModel.selectedCalendarIds) { _, _ in
+                        Task {
+                            // Clear cached events and reload
+                            loadedEvents.removeAll()
+                            for date in visibleDates {
+                                await loadEventsForDate(date, forceReload: true)
+                            }
+                        }
+                    }
+                    .onChange(of: settingsViewModel.selectedReminderListIds) { _, _ in
+                        Task {
+                            // Clear cached events and reload
+                            loadedEvents.removeAll()
+                            for date in visibleDates {
+                                await loadEventsForDate(date, forceReload: true)
+                            }
+                        }
+                    }
+                    .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
+                        Task {
+                            // Clear cached events and reload
+                            loadedEvents.removeAll()
+                            for date in visibleDates {
+                                await loadEventsForDate(date, forceReload: true)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -283,7 +325,12 @@ struct InfiniteDayScrollView: View {
         let dateStart = calendar.startOfDay(for: date)
         guard forceReload || loadedEvents[dateStart] == nil else { return }
 
-        let result = await calendarViewModel.fetchEvents(for: dateStart)
+        let result = await calendarViewModel.fetchEvents(
+            for: dateStart,
+            selectedCalendarIds: settingsViewModel.selectedCalendarIds,
+            selectedReminderListIds: settingsViewModel.selectedReminderListIds,
+            showCompletedReminders: settingsViewModel.showCompletedReminders
+        )
         loadedEvents[dateStart] = result
     }
 }

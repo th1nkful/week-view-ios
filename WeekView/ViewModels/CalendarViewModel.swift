@@ -91,7 +91,7 @@ class CalendarViewModel: ObservableObject {
         }
     }
     
-    func fetchEvents(for date: Date) async -> (events: [EventModel], reminders: [ReminderModel]) {
+    func fetchEvents(for date: Date, selectedCalendarIds: Set<String>? = nil, selectedReminderListIds: Set<String>? = nil, showCompletedReminders: Bool = false) async -> (events: [EventModel], reminders: [ReminderModel]) {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
@@ -100,22 +100,62 @@ class CalendarViewModel: ObservableObject {
 
         var events: [EventModel] = []
         if hasCalendarAccess {
-            let predicate = eventStore.predicateForEvents(withStart: startOfDay, end: endOfDay, calendars: nil)
+            // Filter calendars if specified
+            let calendarsToUse: [EKCalendar]?
+            if let selectedIds = selectedCalendarIds, !selectedIds.isEmpty {
+                let allCalendars = eventStore.calendars(for: .event)
+                calendarsToUse = allCalendars.filter { selectedIds.contains($0.calendarIdentifier) }
+            } else {
+                calendarsToUse = nil
+            }
+            
+            let predicate = eventStore.predicateForEvents(withStart: startOfDay, end: endOfDay, calendars: calendarsToUse)
             let ekEvents = eventStore.events(matching: predicate)
             events = ekEvents.map { EventModel(from: $0) }.sorted { $0.startDate < $1.startDate }
         }
 
         var reminders: [ReminderModel] = []
         if hasRemindersAccess {
-            let predicate = eventStore.predicateForIncompleteReminders(
-                withDueDateStarting: startOfDay, ending: endOfDay, calendars: nil
-            )
+            // Filter reminder lists if specified
+            let reminderListsToUse: [EKCalendar]?
+            if let selectedIds = selectedReminderListIds, !selectedIds.isEmpty {
+                let allReminderLists = eventStore.calendars(for: .reminder)
+                reminderListsToUse = allReminderLists.filter { selectedIds.contains($0.calendarIdentifier) }
+            } else {
+                reminderListsToUse = nil
+            }
+            
+            // Choose predicate based on showCompletedReminders setting
+            let predicate: NSPredicate
+            if showCompletedReminders {
+                predicate = eventStore.predicateForReminders(in: reminderListsToUse)
+            } else {
+                predicate = eventStore.predicateForIncompleteReminders(
+                    withDueDateStarting: startOfDay, ending: endOfDay, calendars: reminderListsToUse
+                )
+            }
+            
             let fetched = await withCheckedContinuation { continuation in
                 eventStore.fetchReminders(matching: predicate) { r in
                     continuation.resume(returning: r ?? [])
                 }
             }
-            reminders = fetched.map { ReminderModel(from: $0) }
+            
+            // Filter by date and completion status
+            let filteredReminders = fetched.filter { reminder in
+                // Check if reminder has a due date in the specified range
+                guard let dueDate = reminder.dueDateComponents?.date else { return false }
+                let isInRange = dueDate >= startOfDay && dueDate < endOfDay
+                
+                // If showCompletedReminders is false, only incomplete reminders should show
+                if !showCompletedReminders {
+                    return isInRange && !reminder.isCompleted
+                }
+                
+                return isInRange
+            }
+            
+            reminders = filteredReminders.map { ReminderModel(from: $0) }
                 .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
         }
 
