@@ -6,16 +6,16 @@ struct DayView: View {
     let reminders: [ReminderModel]
     let onToggleReminder: (ReminderModel) -> Void
     
-    private var dateFormatter: DateFormatter {
+    private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .full
         return formatter
-    }
+    }()
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(dateFormatter.string(from: selectedDate))
+                Text(Self.dateFormatter.string(from: selectedDate))
                     .font(.headline)
                     .padding(.horizontal)
                     .padding(.top)

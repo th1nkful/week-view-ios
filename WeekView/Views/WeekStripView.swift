@@ -48,26 +48,26 @@ struct DayButton: View {
     let isSelected: Bool
     let action: () -> Void
     
-    private var dayFormatter: DateFormatter {
+    private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "E"
         return formatter
-    }
+    }()
     
-    private var dateFormatter: DateFormatter {
+    private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "d"
         return formatter
-    }
+    }()
     
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                Text(dayFormatter.string(from: date))
+                Text(Self.dayFormatter.string(from: date))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
-                Text(dateFormatter.string(from: date))
+                Text(Self.dateFormatter.string(from: date))
                     .font(.title3)
                     .fontWeight(isSelected ? .bold : .regular)
             }

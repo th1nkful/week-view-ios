@@ -9,6 +9,13 @@ struct EventModel: Identifiable {
     let isAllDay: Bool
     let calendar: EKCalendar
     let eventIdentifier: String
+    let calendarColor: Color
+    
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }()
     
     init(from ekEvent: EKEvent) {
         self.id = ekEvent.eventIdentifier
@@ -18,6 +25,7 @@ struct EventModel: Identifiable {
         self.isAllDay = ekEvent.isAllDay
         self.calendar = ekEvent.calendar
         self.eventIdentifier = ekEvent.eventIdentifier
+        self.calendarColor = Color(cgColor: ekEvent.calendar.cgColor)
     }
     
     var duration: String {
@@ -25,12 +33,6 @@ struct EventModel: Identifiable {
             return "All Day"
         }
         
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return "\(formatter.string(from: startDate)) - \(formatter.string(from: endDate))"
-    }
-    
-    var calendarColor: Color {
-        Color(cgColor: calendar.cgColor)
+        return "\(Self.timeFormatter.string(from: startDate)) - \(Self.timeFormatter.string(from: endDate))"
     }
 }

@@ -8,6 +8,13 @@ struct ReminderModel: Identifiable {
     let isCompleted: Bool
     let calendar: EKCalendar
     let calendarItemIdentifier: String
+    let calendarColor: Color
+    
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }()
     
     init(from ekReminder: EKReminder) {
         self.id = ekReminder.calendarItemIdentifier
@@ -16,16 +23,11 @@ struct ReminderModel: Identifiable {
         self.isCompleted = ekReminder.isCompleted
         self.calendar = ekReminder.calendar
         self.calendarItemIdentifier = ekReminder.calendarItemIdentifier
+        self.calendarColor = Color(cgColor: ekReminder.calendar.cgColor)
     }
     
     var dueDateString: String? {
         guard let dueDate = dueDate else { return nil }
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: dueDate)
-    }
-    
-    var calendarColor: Color {
-        Color(cgColor: calendar.cgColor)
+        return Self.timeFormatter.string(from: dueDate)
     }
 }

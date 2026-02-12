@@ -6,6 +6,13 @@ struct WeatherModel {
     let condition: String
     let symbolName: String
     
+    private static let measurementFormatter: MeasurementFormatter = {
+        let formatter = MeasurementFormatter()
+        formatter.unitStyle = .short
+        formatter.numberFormatter.maximumFractionDigits = 0
+        return formatter
+    }()
+    
     init(from weather: CurrentWeather) {
         self.temperature = weather.temperature.value
         self.condition = weather.condition.description
@@ -13,10 +20,7 @@ struct WeatherModel {
     }
     
     var temperatureString: String {
-        let formatter = MeasurementFormatter()
-        formatter.unitStyle = .short
-        formatter.numberFormatter.maximumFractionDigits = 0
         let measurement = Measurement(value: temperature, unit: UnitTemperature.celsius)
-        return formatter.string(from: measurement)
+        return Self.measurementFormatter.string(from: measurement)
     }
 }
