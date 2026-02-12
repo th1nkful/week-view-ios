@@ -48,7 +48,7 @@ struct ReminderCardView: View {
                 .fill(Color(.systemBackground))
                 .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
         )
-        .contentShape(Rectangle())
+        .contentShape(RoundedRectangle(cornerRadius: 12))
         .onTapGesture {
             openReminderInApp()
         }
