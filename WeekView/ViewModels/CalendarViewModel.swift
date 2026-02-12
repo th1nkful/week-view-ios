@@ -23,21 +23,23 @@ class CalendarViewModel: ObservableObject {
     }
     
     func loadEvents(for date: Date) async {
-        guard hasCalendarAccess else { return }
-        
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
         
-        let predicate = eventStore.predicateForEvents(
-            withStart: startOfDay,
-            end: endOfDay,
-            calendars: nil
-        )
-        
-        let ekEvents = eventStore.events(matching: predicate)
-        events = ekEvents.map { EventModel(from: $0) }
-            .sorted { $0.startDate < $1.startDate }
+        if hasCalendarAccess {
+            let predicate = eventStore.predicateForEvents(
+                withStart: startOfDay,
+                end: endOfDay,
+                calendars: nil
+            )
+            
+            let ekEvents = eventStore.events(matching: predicate)
+            events = ekEvents.map { EventModel(from: $0) }
+                .sorted { $0.startDate < $1.startDate }
+        } else {
+            events = []
+        }
         
         await loadReminders(for: date)
     }
