@@ -51,6 +51,8 @@ class CalendarViewModel: ObservableObject {
         let startOfDay = calendar.startOfDay(for: date)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
         
+        // Note: EventKit doesn't provide date-range predicates for reminders.
+        // We fetch all reminders and filter in-memory by due date.
         let predicate = eventStore.predicateForReminders(in: nil)
         
         do {

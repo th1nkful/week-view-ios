@@ -18,8 +18,15 @@ class WeatherViewModel: NSObject, ObservableObject {
     }
     
     func requestLocationAndLoadWeather() async {
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.startUpdatingLocation()
+        let authStatus = locationManager.authorizationStatus
+        
+        if authStatus == .notDetermined {
+            locationManager.requestWhenInUseAuthorization()
+        } else if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
+            locationManager.startUpdatingLocation()
+        } else {
+            errorMessage = "Location access denied"
+        }
     }
     
     private func loadWeather(for location: CLLocation) async {
@@ -55,6 +62,19 @@ extension WeatherViewModel: CLLocationManagerDelegate {
         Task { @MainActor in
             errorMessage = "Location unavailable"
             print("Location error: \(error.localizedDescription)")
+        }
+    }
+    
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            let status = manager.authorizationStatus
+            
+            if status == .authorizedWhenInUse || status == .authorizedAlways {
+                manager.startUpdatingLocation()
+            } else if status == .denied || status == .restricted {
+                errorMessage = "Location access denied"
+                isLoading = false
+            }
         }
     }
 }

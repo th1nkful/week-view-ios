@@ -2,7 +2,7 @@ import Foundation
 import WeatherKit
 
 struct WeatherModel {
-    let temperature: Double
+    let temperature: Measurement<UnitTemperature>
     let condition: String
     let symbolName: String
     
@@ -14,13 +14,12 @@ struct WeatherModel {
     }()
     
     init(from weather: CurrentWeather) {
-        self.temperature = weather.temperature.value
+        self.temperature = weather.temperature
         self.condition = weather.condition.description
         self.symbolName = weather.symbolName
     }
     
     var temperatureString: String {
-        let measurement = Measurement(value: temperature, unit: UnitTemperature.celsius)
-        return Self.measurementFormatter.string(from: measurement)
+        return Self.measurementFormatter.string(from: temperature)
     }
 }

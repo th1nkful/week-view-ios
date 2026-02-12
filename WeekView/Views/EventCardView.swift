@@ -3,6 +3,7 @@ import EventKit
 
 struct EventCardView: View {
     let event: EventModel
+    @Environment(\.openURL) private var openURL
     
     var body: some View {
         Button {
@@ -49,7 +50,7 @@ struct EventCardView: View {
     private func openEventInCalendar() {
         let urlString = "calshow:\(event.startDate.timeIntervalSinceReferenceDate)"
         if let url = URL(string: urlString) {
-            UIApplication.shared.open(url)
+            openURL(url)
         }
     }
 }

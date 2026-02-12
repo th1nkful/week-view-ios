@@ -31,10 +31,8 @@ struct ContentView: View {
                 await calendarViewModel.loadEvents(for: selectedDate)
                 await weatherViewModel.requestLocationAndLoadWeather()
             }
-            .onChange(of: selectedDate) { oldValue, newValue in
-                Task {
-                    await calendarViewModel.loadEvents(for: newValue)
-                }
+            .task(id: selectedDate) {
+                await calendarViewModel.loadEvents(for: selectedDate)
             }
         }
     }
