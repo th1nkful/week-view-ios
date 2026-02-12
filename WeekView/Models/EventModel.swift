@@ -25,7 +25,7 @@ struct EventModel: Identifiable {
         self.endDate = ekEvent.endDate
         self.isAllDay = ekEvent.isAllDay
         self.calendar = ekEvent.calendar
-        self.eventIdentifier = ekEvent.eventIdentifier ?? ""
+        self.eventIdentifier = ekEvent.calendarItemIdentifier
         self.calendarColor = Color(cgColor: ekEvent.calendar.cgColor)
     }
     
