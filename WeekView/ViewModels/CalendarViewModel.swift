@@ -125,42 +125,50 @@ class CalendarViewModel: ObservableObject {
                 reminderListsToUse = nil
             }
             
-            // Choose predicate based on showCompletedReminders setting
-            let predicate: NSPredicate
+            // Fetch reminders based on showCompletedReminders setting
             if showCompletedReminders {
-                // Fetch completed reminders within the date range
-                predicate = eventStore.predicateForCompletedReminders(
+                // Fetch both incomplete and completed reminders
+                let incompletePredicate = eventStore.predicateForIncompleteReminders(
+                    withDueDateStarting: startOfDay, ending: endOfDay, calendars: reminderListsToUse
+                )
+                let completedPredicate = eventStore.predicateForCompletedReminders(
                     withCompletionDateStarting: startOfDay,
                     ending: endOfDay,
                     calendars: reminderListsToUse
                 )
+                
+                // Fetch both types concurrently
+                async let incompleteFetched: [EKReminder] = withCheckedContinuation { continuation in
+                    eventStore.fetchReminders(matching: incompletePredicate) { r in
+                        continuation.resume(returning: r ?? [])
+                    }
+                }
+                async let completedFetched: [EKReminder] = withCheckedContinuation { continuation in
+                    eventStore.fetchReminders(matching: completedPredicate) { r in
+                        continuation.resume(returning: r ?? [])
+                    }
+                }
+                
+                let (incomplete, completed) = await (incompleteFetched, completedFetched)
+                let allReminders = incomplete + completed
+                
+                reminders = allReminders.map { ReminderModel(from: $0) }
+                    .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
             } else {
-                predicate = eventStore.predicateForIncompleteReminders(
+                // Fetch only incomplete reminders
+                let predicate = eventStore.predicateForIncompleteReminders(
                     withDueDateStarting: startOfDay, ending: endOfDay, calendars: reminderListsToUse
                 )
-            }
-            
-            let fetched = await withCheckedContinuation { continuation in
-                eventStore.fetchReminders(matching: predicate) { r in
-                    continuation.resume(returning: r ?? [])
+                
+                let fetched = await withCheckedContinuation { continuation in
+                    eventStore.fetchReminders(matching: predicate) { r in
+                        continuation.resume(returning: r ?? [])
+                    }
                 }
+                
+                reminders = fetched.map { ReminderModel(from: $0) }
+                    .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
             }
-            
-            // For completed reminders, filter by completion date; for incomplete, filter by due date
-            let filteredReminders = fetched.filter { reminder in
-                if showCompletedReminders {
-                    // For completed reminders, check completion date
-                    guard let completionDate = reminder.completionDate else { return false }
-                    return completionDate >= startOfDay && completionDate < endOfDay
-                } else {
-                    // For incomplete reminders, check due date
-                    guard let dueDate = reminder.dueDateComponents?.date else { return false }
-                    return dueDate >= startOfDay && dueDate < endOfDay && !reminder.isCompleted
-                }
-            }
-            
-            reminders = filteredReminders.map { ReminderModel(from: $0) }
-                .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
         }
 
         return (events, reminders)
