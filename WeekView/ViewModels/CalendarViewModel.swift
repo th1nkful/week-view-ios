@@ -51,21 +51,28 @@ class CalendarViewModel: ObservableObject {
         let startOfDay = calendar.startOfDay(for: date)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
         
-        // Note: EventKit doesn't provide date-range predicates for reminders.
-        // We fetch all reminders and filter in-memory by due date.
-        let predicate = eventStore.predicateForReminders(in: nil)
+        // Fetch incomplete reminders with due dates in the selected day's range
+        let incompletePredicate = eventStore.predicateForIncompleteReminders(
+            withDueDateStarting: startOfDay,
+            ending: endOfDay,
+            calendars: nil
+        )
+        
+        // Also fetch completed reminders for the day
+        let completedPredicate = eventStore.predicateForCompletedReminders(
+            withCompletionDateStarting: startOfDay,
+            ending: endOfDay,
+            calendars: nil
+        )
         
         do {
-            let ekReminders = try await eventStore.reminders(matching: predicate)
+            // Fetch both incomplete and completed reminders
+            async let incompleteReminders = eventStore.reminders(matching: incompletePredicate)
+            async let completedReminders = eventStore.reminders(matching: completedPredicate)
             
-            let filtered = ekReminders.filter { reminder in
-                guard let dueDate = reminder.dueDateComponents?.date else {
-                    return false
-                }
-                return dueDate >= startOfDay && dueDate < endOfDay
-            }
+            let allReminders = try await incompleteReminders + completedReminders
             
-            reminders = filtered.map { ReminderModel(from: $0) }
+            reminders = allReminders.map { ReminderModel(from: $0) }
                 .sorted { ($0.dueDate ?? Date.distantFuture) < ($1.dueDate ?? Date.distantFuture) }
         } catch {
             print("Error loading reminders: \(error.localizedDescription)")
