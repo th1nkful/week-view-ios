@@ -11,13 +11,14 @@ struct EventModel: Identifiable {
     let calendar: EKCalendar
     let eventIdentifier: String
     let calendarColor: Color
-    
+    let location: String?
+
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter
     }()
-    
+
     init(from ekEvent: EKEvent) {
         self.id = ekEvent.calendarItemIdentifier
         self.title = ekEvent.title ?? "Untitled Event"
@@ -27,13 +28,23 @@ struct EventModel: Identifiable {
         self.calendar = ekEvent.calendar
         self.eventIdentifier = ekEvent.calendarItemIdentifier
         self.calendarColor = Color(cgColor: ekEvent.calendar.cgColor)
+        let loc = ekEvent.location
+        self.location = (loc != nil && !loc!.isEmpty) ? loc : nil
     }
-    
+
     var duration: String {
         if isAllDay {
             return "All Day"
         }
-        
+
         return "\(Self.timeFormatter.string(from: startDate)) - \(Self.timeFormatter.string(from: endDate))"
+    }
+
+    var startTimeString: String {
+        Self.timeFormatter.string(from: startDate)
+    }
+
+    var endTimeString: String {
+        Self.timeFormatter.string(from: endDate)
     }
 }

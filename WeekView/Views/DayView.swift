@@ -12,6 +12,14 @@ struct DayView: View {
         return formatter
     }()
     
+    private var allDayEvents: [EventModel] {
+        events.filter { $0.isAllDay }
+    }
+
+    private var timedEvents: [EventModel] {
+        events.filter { !$0.isAllDay }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -19,13 +27,13 @@ struct DayView: View {
                     .font(.headline)
                     .padding(.horizontal)
                     .padding(.top)
-                
+
                 if events.isEmpty && reminders.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "calendar")
                             .font(.system(size: 50))
                             .foregroundStyle(.secondary)
-                        
+
                         Text("No events or reminders")
                             .font(.headline)
                             .foregroundStyle(.secondary)
@@ -33,25 +41,30 @@ struct DayView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 40)
                 } else {
-                    if !events.isEmpty {
+                    if !allDayEvents.isEmpty {
+                        FlowLayout(spacing: 6) {
+                            ForEach(allDayEvents) { event in
+                                AllDayEventPillView(event: event)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+
+                    if !timedEvents.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Events")
-                                .font(.headline)
-                                .padding(.horizontal)
-                            
-                            ForEach(events) { event in
+                            ForEach(timedEvents) { event in
                                 EventCardView(event: event)
                                     .padding(.horizontal)
                             }
                         }
                     }
-                    
+
                     if !reminders.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Reminders")
                                 .font(.headline)
                                 .padding(.horizontal)
-                            
+
                             ForEach(reminders) { reminder in
                                 ReminderCardView(reminder: reminder) {
                                     onToggleReminder(reminder)
