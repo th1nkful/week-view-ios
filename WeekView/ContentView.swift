@@ -17,16 +17,22 @@ struct ContentView: View {
                 
                 // Month and Year Header (left-aligned)
                 HStack(spacing: 4) {
-                    Text(selectedDate.formatted(.dateTime.month(.wide)))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .textCase(.uppercase)
-                    
-                    Text(selectedDate.formatted(.dateTime.year()))
-                        .font(.title2)
-                        .fontWeight(.regular)
-                        .foregroundStyle(.red)
+                    HStack(spacing: 4) {
+                        Text(selectedDate.formatted(.dateTime.month(.wide)))
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .textCase(.uppercase)
+                        
+                        Text(selectedDate.formatted(.dateTime.year()))
+                            .font(.title2)
+                            .fontWeight(.regular)
+                            .foregroundStyle(.red)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedDate = Date()
+                    }
                     
                     Spacer()
                     
@@ -41,10 +47,6 @@ struct ContentView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
                 .padding(.bottom, 4)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    selectedDate = Date()
-                }
                 
                 WeekStripView(selectedDate: $selectedDate)
                     .padding(.horizontal)
