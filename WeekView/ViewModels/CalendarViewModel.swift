@@ -127,32 +127,22 @@ class CalendarViewModel: ObservableObject {
             
             // Fetch reminders based on showCompletedReminders setting
             if showCompletedReminders {
-                // Fetch both incomplete and completed reminders
-                let incompletePredicate = eventStore.predicateForIncompleteReminders(
-                    withDueDateStarting: startOfDay, ending: endOfDay, calendars: reminderListsToUse
-                )
-                let completedPredicate = eventStore.predicateForCompletedReminders(
-                    withCompletionDateStarting: startOfDay,
-                    ending: endOfDay,
-                    calendars: reminderListsToUse
-                )
+                // Fetch both incomplete and completed reminders with due dates in the range
+                let allRemindersPredicate = eventStore.predicateForReminders(in: reminderListsToUse)
                 
-                // Fetch both types concurrently
-                async let incompleteFetched: [EKReminder] = withCheckedContinuation { continuation in
-                    eventStore.fetchReminders(matching: incompletePredicate) { r in
-                        continuation.resume(returning: r ?? [])
-                    }
-                }
-                async let completedFetched: [EKReminder] = withCheckedContinuation { continuation in
-                    eventStore.fetchReminders(matching: completedPredicate) { r in
+                let fetched = await withCheckedContinuation { continuation in
+                    eventStore.fetchReminders(matching: allRemindersPredicate) { r in
                         continuation.resume(returning: r ?? [])
                     }
                 }
                 
-                let (incomplete, completed) = await (incompleteFetched, completedFetched)
-                let allReminders = incomplete + completed
+                // Filter to only include reminders with due dates in the specified range
+                let filteredReminders = fetched.filter { reminder in
+                    guard let dueDate = reminder.dueDateComponents?.date else { return false }
+                    return dueDate >= startOfDay && dueDate < endOfDay
+                }
                 
-                reminders = allReminders.map { ReminderModel(from: $0) }
+                reminders = filteredReminders.map { ReminderModel(from: $0) }
                     .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
             } else {
                 // Fetch only incomplete reminders
