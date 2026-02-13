@@ -20,6 +20,8 @@
 		011 /* EventCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111 /* EventCardView.swift */; };
 		012 /* ReminderCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112 /* ReminderCardView.swift */; };
 		013 /* WeatherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113 /* WeatherView.swift */; };
+		014 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115 /* SettingsViewModel.swift */; };
+		015 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +40,8 @@
 		112 /* ReminderCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderCardView.swift; sourceTree = "<group>"; };
 		113 /* WeatherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherView.swift; sourceTree = "<group>"; };
 		114 /* WeekView.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WeekView.entitlements; sourceTree = "<group>"; };
+		115 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		116 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +100,7 @@
 			children = (
 				104 /* CalendarViewModel.swift */,
 				105 /* WeatherViewModel.swift */,
+				115 /* SettingsViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -108,6 +113,7 @@
 				111 /* EventCardView.swift */,
 				112 /* ReminderCardView.swift */,
 				113 /* WeatherView.swift */,
+				116 /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -193,6 +199,8 @@
 				011 /* EventCardView.swift in Sources */,
 				012 /* ReminderCardView.swift in Sources */,
 				013 /* WeatherView.swift in Sources */,
+				014 /* SettingsViewModel.swift in Sources */,
+				015 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

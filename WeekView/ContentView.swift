@@ -3,7 +3,9 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var calendarViewModel = CalendarViewModel()
     @StateObject private var weatherViewModel = WeatherViewModel()
+    @StateObject private var settingsViewModel = SettingsViewModel()
     @State private var selectedDate = Date()
+    @State private var showSettings = false
     
     var body: some View {
         NavigationStack {
@@ -15,26 +17,36 @@ struct ContentView: View {
                 
                 // Month and Year Header (left-aligned)
                 HStack(spacing: 4) {
-                    Text(selectedDate.formatted(.dateTime.month(.wide)))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .textCase(.uppercase)
-                    
-                    Text(selectedDate.formatted(.dateTime.year()))
-                        .font(.title2)
-                        .fontWeight(.regular)
-                        .foregroundStyle(.red)
+                    HStack(spacing: 4) {
+                        Text(selectedDate.formatted(.dateTime.month(.wide)))
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .textCase(.uppercase)
+                        
+                        Text(selectedDate.formatted(.dateTime.year()))
+                            .font(.title2)
+                            .fontWeight(.regular)
+                            .foregroundStyle(.red)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedDate = Date()
+                    }
                     
                     Spacer()
+                    
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gear")
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
                 .padding(.bottom, 4)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    selectedDate = Date()
-                }
                 
                 WeekStripView(selectedDate: $selectedDate)
                     .padding(.horizontal)
@@ -46,8 +58,12 @@ struct ContentView: View {
                 
                 InfiniteDayScrollView(
                     selectedDate: $selectedDate,
-                    calendarViewModel: calendarViewModel
+                    calendarViewModel: calendarViewModel,
+                    settingsViewModel: settingsViewModel
                 )
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView(viewModel: settingsViewModel)
             }
             .task {
                 await calendarViewModel.requestAccess()
@@ -61,6 +77,7 @@ struct ContentView: View {
 struct InfiniteDayScrollView: View {
     @Binding var selectedDate: Date
     @ObservedObject var calendarViewModel: CalendarViewModel
+    @ObservedObject var settingsViewModel: SettingsViewModel
     
     @State private var visibleDates: [Date] = []
     @State private var loadedEvents: [Date: (events: [EventModel], reminders: [ReminderModel])] = [:]
@@ -167,17 +184,29 @@ struct InfiniteDayScrollView: View {
                     .onChange(of: calendarViewModel.hasCalendarAccess) { oldValue, newValue in
                         if newValue && !hasInitializedWithPermissions {
                             hasInitializedWithPermissions = true
-                            Task {
-                                // Clear cached events
-                                loadedEvents.removeAll()
-                                // Reload all visible dates
-                                for date in visibleDates {
-                                    await loadEventsForDate(date, forceReload: true)
-                                }
-                            }
+                            reloadAllVisibleDates()
                         }
                     }
+                    .onChange(
+                        of: (
+                            settingsViewModel.selectedCalendarIds,
+                            settingsViewModel.selectedReminderListIds,
+                            settingsViewModel.showCompletedReminders
+                        )
+                    ) { _, _ in
+                        reloadAllVisibleDates()
+                    }
                 }
+            }
+        }
+    }
+    
+    private func reloadAllVisibleDates() {
+        Task {
+            // Clear cached events and reload all visible dates
+            loadedEvents.removeAll()
+            for date in visibleDates {
+                await loadEventsForDate(date)
             }
         }
     }
@@ -283,7 +312,12 @@ struct InfiniteDayScrollView: View {
         let dateStart = calendar.startOfDay(for: date)
         guard forceReload || loadedEvents[dateStart] == nil else { return }
 
-        let result = await calendarViewModel.fetchEvents(for: dateStart)
+        let result = await calendarViewModel.fetchEvents(
+            for: dateStart,
+            selectedCalendarIds: settingsViewModel.selectedCalendarIds,
+            selectedReminderListIds: settingsViewModel.selectedReminderListIds,
+            showCompletedReminders: settingsViewModel.showCompletedReminders
+        )
         loadedEvents[dateStart] = result
     }
 }
