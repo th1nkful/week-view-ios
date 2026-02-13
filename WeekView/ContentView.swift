@@ -9,57 +9,65 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // WeatherView hidden - requires paid Apple Developer account
-                // WeatherView(viewModel: weatherViewModel)
-                //     .padding(.horizontal)
-                //     .padding(.top)
-                
-                // Month and Year Header (left-aligned)
-                HStack(spacing: 4) {
+            ZStack(alignment: .top) {
+                VStack(spacing: 0) {
+                    // Month and Year Header (left-aligned)
                     HStack(spacing: 4) {
-                        Text(selectedDate.formatted(.dateTime.month(.wide)))
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
-                            .textCase(.uppercase)
-                        
-                        Text(selectedDate.formatted(.dateTime.year()))
-                            .font(.title2)
-                            .fontWeight(.regular)
-                            .foregroundStyle(.red)
+                        HStack(spacing: 4) {
+                            Text(selectedDate.formatted(.dateTime.month(.wide)))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                                .textCase(.uppercase)
+
+                            Text(selectedDate.formatted(.dateTime.year()))
+                                .font(.title2)
+                                .fontWeight(.regular)
+                                .foregroundStyle(.red)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedDate = Date()
+                        }
+
+                        Spacer()
+
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gear")
+                                .font(.title2)
+                                .foregroundStyle(.primary)
+                        }
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedDate = Date()
-                    }
-                    
-                    Spacer()
-                    
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gear")
-                            .font(.title2)
-                            .foregroundStyle(.primary)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
-                
-                WeekStripView(selectedDate: $selectedDate)
                     .padding(.horizontal)
-                    .padding(.top, 4)
-                    .padding(.bottom, 12)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+                    .background(Color(uiColor: .systemBackground))
+                    
+                    // Spacer for week strip
+                    Color.clear
+                        .frame(height: 88)
+                    
+                    InfiniteDayScrollView(
+                        selectedDate: $selectedDate,
+                        calendarViewModel: calendarViewModel,
+                        settingsViewModel: settingsViewModel
+                    )
+                }
+                .background(Color(uiColor: .systemBackground))
                 
-                InfiniteDayScrollView(
-                    selectedDate: $selectedDate,
-                    calendarViewModel: calendarViewModel,
-                    settingsViewModel: settingsViewModel
-                )
+                // Floating week strip overlay
+                VStack(spacing: 0) {
+                    // Month and Year Header height
+                    Color.clear
+                        .frame(height: 52)
+                    
+                    WeekStripView(selectedDate: $selectedDate)
+                        .padding(.horizontal)
+                        .padding(.top, 4)
+                }
             }
-            .background(Color(uiColor: .systemBackground))
             .sheet(isPresented: $showSettings) {
                 SettingsView(viewModel: settingsViewModel)
             }
