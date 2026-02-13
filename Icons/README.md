@@ -114,4 +114,4 @@ Consider these enhancements for future versions:
 ## References
 
 - [Apple Icon Design Guidelines](https://developer.apple.com/design/human-interface-guidelines/app-icons)
-- [Icon Composer Documentation](https://developer.apple.com/documentation/iconcomposer)
+- [Apple Developer Documentation](https://developer.apple.com/documentation/)
