@@ -47,4 +47,42 @@ struct EventModel: Identifiable {
     var endTimeString: String {
         Self.timeFormatter.string(from: endDate)
     }
+    
+    var simplifiedLocation: String? {
+        guard let location = location else { return nil }
+        
+        // Check for well-known virtual meeting providers
+        let lowercased = location.lowercased()
+        
+        // Zoom
+        if lowercased.contains("zoom.us") {
+            return "Zoom"
+        }
+        
+        // Google Meet
+        if lowercased.contains("meet.google.com") {
+            return "Google Meet"
+        }
+        
+        // Microsoft Teams
+        if lowercased.contains("teams.microsoft.com") || lowercased.contains("teams.live.com") {
+            return "Microsoft Teams"
+        }
+        
+        // Slack
+        if lowercased.contains("slack.com/") && (lowercased.contains("/huddle") || lowercased.contains("/call")) {
+            return "Slack"
+        }
+        
+        // Check if it's a URL
+        if let url = URL(string: location), 
+           let host = url.host?.lowercased() {
+            // Remove www. prefix
+            let domain = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+            return domain
+        }
+        
+        // Return original location if it's not a URL
+        return location
+    }
 }
