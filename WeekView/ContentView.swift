@@ -374,6 +374,7 @@ struct DaySection: View {
         }
         
         // Sort by time (events by start time, reminders by due date)
+        // Items without a time (nil sortTime) are sorted to the end
         return items.sorted { item1, item2 in
             let time1 = item1.sortTime ?? Date.distantFuture
             let time2 = item2.sortTime ?? Date.distantFuture
@@ -381,9 +382,18 @@ struct DaySection: View {
         }
     }
     
-    enum TimedItem {
+    enum TimedItem: Identifiable {
         case event(EventModel)
         case reminder(ReminderModel)
+        
+        var id: String {
+            switch self {
+            case .event(let event):
+                return "event_\(event.id)"
+            case .reminder(let reminder):
+                return "reminder_\(reminder.id)"
+            }
+        }
         
         var sortTime: Date? {
             switch self {
@@ -430,8 +440,7 @@ struct DaySection: View {
                     // Combined timed events and reminders, sorted by time
                     if !sortedTimedItems.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
-                            ForEach(sortedTimedItems.indices, id: \.self) { index in
-                                let item = sortedTimedItems[index]
+                            ForEach(sortedTimedItems) { item in
                                 switch item {
                                 case .event(let event):
                                     EventCardView(event: event)
