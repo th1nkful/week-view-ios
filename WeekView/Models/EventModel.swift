@@ -70,12 +70,18 @@ struct EventModel: Identifiable {
         }
         
         // Slack
-        if lowercased.contains("slack.com/") && (lowercased.contains("/huddle") || lowercased.contains("/call")) {
+        if lowercased.contains("slack.com") {
             return "Slack"
         }
         
         // Check if it's a URL
-        if let url = URL(string: location), 
+        // Add scheme if missing to help URL parsing
+        var urlString = location
+        if !lowercased.hasPrefix("http://") && !lowercased.hasPrefix("https://") {
+            urlString = "https://" + location
+        }
+        
+        if let url = URL(string: urlString), 
            let host = url.host?.lowercased() {
             // Remove www. prefix
             let domain = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
