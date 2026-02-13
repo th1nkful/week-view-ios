@@ -187,13 +187,13 @@ struct InfiniteDayScrollView: View {
                             reloadAllVisibleDates()
                         }
                     }
-                    .onChange(of: settingsViewModel.selectedCalendarIds) { _, _ in
-                        reloadAllVisibleDates()
-                    }
-                    .onChange(of: settingsViewModel.selectedReminderListIds) { _, _ in
-                        reloadAllVisibleDates()
-                    }
-                    .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
+                    .onChange(
+                        of: (
+                            settingsViewModel.selectedCalendarIds,
+                            settingsViewModel.selectedReminderListIds,
+                            settingsViewModel.showCompletedReminders
+                        )
+                    ) { _, _ in
                         reloadAllVisibleDates()
                     }
                 }

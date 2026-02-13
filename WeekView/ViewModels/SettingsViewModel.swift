@@ -6,7 +6,11 @@ import EventKit
 class SettingsViewModel: ObservableObject {
     @Published var selectedCalendarIds: Set<String> = []
     @Published var selectedReminderListIds: Set<String> = []
-    @Published var showCompletedReminders: Bool = false
+    @Published var showCompletedReminders: Bool = false {
+        didSet {
+            saveSettings()
+        }
+    }
     @Published var availableCalendars: [EKCalendar] = []
     @Published var availableReminderLists: [EKCalendar] = []
     
@@ -14,6 +18,7 @@ class SettingsViewModel: ObservableObject {
     private let selectedCalendarsKey = "selectedCalendarIds"
     private let selectedReminderListsKey = "selectedReminderListIds"
     private let showCompletedRemindersKey = "showCompletedReminders"
+    private let hasInitializedKey = "hasInitializedSettings"
     
     init() {
         loadSettings()
@@ -23,15 +28,13 @@ class SettingsViewModel: ObservableObject {
         availableCalendars = eventStore.calendars(for: .event)
         availableReminderLists = eventStore.calendars(for: .reminder)
         
-        // If no calendars are selected, select all by default
-        if selectedCalendarIds.isEmpty {
+        // Only auto-select all on first launch, not when user has explicitly deselected all
+        let hasInitialized = UserDefaults.standard.bool(forKey: hasInitializedKey)
+        if !hasInitialized {
+            // First launch - select all calendars and reminder lists by default
             selectedCalendarIds = Set(availableCalendars.map { $0.calendarIdentifier })
-            saveSettings()
-        }
-        
-        // If no reminder lists are selected, select all by default
-        if selectedReminderListIds.isEmpty {
             selectedReminderListIds = Set(availableReminderLists.map { $0.calendarIdentifier })
+            UserDefaults.standard.set(true, forKey: hasInitializedKey)
             saveSettings()
         }
     }
@@ -54,10 +57,7 @@ class SettingsViewModel: ObservableObject {
         saveSettings()
     }
     
-    func toggleShowCompletedReminders() {
-        showCompletedReminders.toggle()
-        saveSettings()
-    }
+
     
     private func loadSettings() {
         if let savedCalendarIds = UserDefaults.standard.array(forKey: selectedCalendarsKey) as? [String] {
@@ -68,7 +68,11 @@ class SettingsViewModel: ObservableObject {
             selectedReminderListIds = Set(savedReminderListIds)
         }
         
-        showCompletedReminders = UserDefaults.standard.bool(forKey: showCompletedRemindersKey)
+        // Load showCompletedReminders without triggering didSet
+        let value = UserDefaults.standard.bool(forKey: showCompletedRemindersKey)
+        if value != showCompletedReminders {
+            _showCompletedReminders = Published(initialValue: value)
+        }
     }
     
     private func saveSettings() {

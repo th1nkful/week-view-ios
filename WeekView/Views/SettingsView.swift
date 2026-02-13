@@ -98,10 +98,7 @@ struct SettingsView: View {
                 
                 // Reminder Options
                 Section {
-                    Toggle("Show Completed Reminders", isOn: .init(
-                        get: { viewModel.showCompletedReminders },
-                        set: { _ in viewModel.toggleShowCompletedReminders() }
-                    ))
+                    Toggle("Show Completed Reminders", isOn: $viewModel.showCompletedReminders)
                 } header: {
                     Text("Reminder Options")
                 } footer: {
