@@ -21,7 +21,7 @@ struct ContentView: View {
                         Text(selectedDate.formatted(.dateTime.month(.wide)))
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                             .textCase(.uppercase)
                         
                         Text(selectedDate.formatted(.dateTime.year()))
@@ -41,7 +41,7 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: "gear")
                             .font(.title2)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                     }
                 }
                 .padding(.horizontal)
