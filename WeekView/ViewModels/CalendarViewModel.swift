@@ -136,8 +136,9 @@ class CalendarViewModel: ObservableObject {
                 
                 // Fetch reminders based on showCompletedReminders setting
                 if showCompletedReminders {
-                    // Fetch both incomplete and completed reminders with due dates in the range
-                    // Use two separate predicates for efficiency
+                    // Fetch both incomplete and completed reminders
+                    // - Incomplete: due date in target day
+                    // - Completed: completion date in target day (regardless of due date)
                     let incompletePredicate = eventStore.predicateForIncompleteReminders(
                         withDueDateStarting: startOfDay, ending: endOfDay, calendars: reminderListsToUse
                     )
@@ -161,17 +162,17 @@ class CalendarViewModel: ObservableObject {
                     
                     let (incomplete, completed) = await (incompleteFetched, completedFetched)
                     
-                    // Combine and deduplicate by identifier
-                    // Prioritize reminders with due dates in the target range
+                    // Deduplicate: if a reminder appears in both (e.g., completed today with due date today),
+                    // the completed version is used (more current state)
                     var reminderMap: [String: EKReminder] = [:]
                     
-                    // Add incomplete reminders (all have due dates in range)
+                    // Add incomplete reminders first
                     for reminder in incomplete {
                         reminderMap[reminder.calendarItemIdentifier] = reminder
                     }
                     
-                    // Add completed reminders (completion date in range)
-                    // These may or may not have due dates
+                    // Add/overwrite with completed reminders
+                    // This ensures if a reminder was just completed, we show the completed version
                     for reminder in completed {
                         reminderMap[reminder.calendarItemIdentifier] = reminder
                     }
