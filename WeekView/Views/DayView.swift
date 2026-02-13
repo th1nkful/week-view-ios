@@ -42,7 +42,7 @@ struct DayView: View {
                     .padding(.vertical, 40)
                 } else {
                     if !allDayEvents.isEmpty {
-                        FlowLayout(spacing: 6) {
+                        VStack(alignment: .leading, spacing: 4) {
                             ForEach(allDayEvents) { event in
                                 AllDayEventPillView(event: event)
                             }
