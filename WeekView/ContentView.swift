@@ -388,7 +388,7 @@ struct DaySection: View {
                                 AllDayEventPillView(event: event)
                             }
                         }
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal)
                     }
 
                     if !timedEvents.isEmpty {
