@@ -98,7 +98,6 @@ struct InfiniteDayScrollView: View {
                         .padding()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(uiColor: .systemGroupedBackground))
                 .onAppear {
                     loadCurrentWeek()
                 }
@@ -131,7 +130,6 @@ struct InfiniteDayScrollView: View {
                         }
                         .padding(.top, 8)
                     }
-                    .background(Color(uiColor: .systemGroupedBackground))
                     .scrollPosition(id: $scrollPosition)
                     .onAppear {
                         // Scroll to today when the view first appears
@@ -199,6 +197,7 @@ struct InfiniteDayScrollView: View {
                 }
             }
         }
+        .background(Color(uiColor: .systemGroupedBackground))
     }
     
     private func reloadAllVisibleDates() {
