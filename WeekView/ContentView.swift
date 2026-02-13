@@ -59,7 +59,7 @@ struct ContentView: View {
                     settingsViewModel: settingsViewModel
                 )
             }
-            .background(Color.black)
+            .background(Color(uiColor: .systemBackground))
             .sheet(isPresented: $showSettings) {
                 SettingsView(viewModel: settingsViewModel)
             }
