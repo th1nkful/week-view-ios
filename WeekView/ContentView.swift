@@ -51,10 +51,7 @@ struct ContentView: View {
                 WeekStripView(selectedDate: $selectedDate)
                     .padding(.horizontal)
                     .padding(.top, 4)
-                    .overlay(alignment: .bottom) {
-                        Divider()
-                            .background(Color(uiColor: .separator))
-                    }
+                    .padding(.bottom, 12)
                 
                 InfiniteDayScrollView(
                     selectedDate: $selectedDate,
@@ -100,6 +97,7 @@ struct InfiniteDayScrollView: View {
                         .padding()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(uiColor: .systemGroupedBackground))
                 .onAppear {
                     loadCurrentWeek()
                 }
@@ -132,6 +130,7 @@ struct InfiniteDayScrollView: View {
                         }
                         .padding(.top, 8)
                     }
+                    .background(Color(uiColor: .systemGroupedBackground))
                     .scrollPosition(id: $scrollPosition)
                     .onAppear {
                         // Scroll to today when the view first appears

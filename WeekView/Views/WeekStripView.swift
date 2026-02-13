@@ -40,6 +40,11 @@ struct WeekStripView: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: 76)
+        .background(
+            .ultraThinMaterial,
+            in: RoundedRectangle(cornerRadius: 16)
+        )
+        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         .onChange(of: currentWeekOffset) { oldValue, newValue in
             // Only update selectedDate if the user swiped the week (not from scroll)
             guard !isUpdatingFromScroll else {
