@@ -358,6 +358,42 @@ struct DaySection: View {
     private var timedEvents: [EventModel] {
         events.filter { !$0.isAllDay }
     }
+    
+    // Combined items sorted by time
+    private var sortedTimedItems: [TimedItem] {
+        var items: [TimedItem] = []
+        
+        // Add timed events
+        for event in timedEvents {
+            items.append(.event(event))
+        }
+        
+        // Add reminders
+        for reminder in reminders {
+            items.append(.reminder(reminder))
+        }
+        
+        // Sort by time (events by start time, reminders by due date)
+        return items.sorted { item1, item2 in
+            let time1 = item1.sortTime ?? Date.distantFuture
+            let time2 = item2.sortTime ?? Date.distantFuture
+            return time1 < time2
+        }
+    }
+    
+    enum TimedItem {
+        case event(EventModel)
+        case reminder(ReminderModel)
+        
+        var sortTime: Date? {
+            switch self {
+            case .event(let event):
+                return event.startDate
+            case .reminder(let reminder):
+                return reminder.dueDate
+            }
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -391,30 +427,23 @@ struct DaySection: View {
                         .padding(.horizontal)
                     }
 
-                    if !timedEvents.isEmpty {
+                    // Combined timed events and reminders, sorted by time
+                    if !sortedTimedItems.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
-                            ForEach(timedEvents) { event in
-                                EventCardView(event: event)
+                            ForEach(sortedTimedItems.indices, id: \.self) { index in
+                                let item = sortedTimedItems[index]
+                                switch item {
+                                case .event(let event):
+                                    EventCardView(event: event)
+                                        .padding(.horizontal, 8)
+                                case .reminder(let reminder):
+                                    ReminderCardView(reminder: reminder) {
+                                        onToggleReminder(reminder)
+                                    }
                                     .padding(.horizontal, 8)
-                            }
-                        }
-                    }
-
-                    if !reminders.isEmpty {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Reminders")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 8)
-
-                            ForEach(reminders) { reminder in
-                                ReminderCardView(reminder: reminder) {
-                                    onToggleReminder(reminder)
                                 }
-                                .padding(.horizontal, 8)
                             }
                         }
-                        .padding(.top, events.isEmpty ? 0 : 4)
                     }
                 }
             }
