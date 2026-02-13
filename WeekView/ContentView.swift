@@ -7,6 +7,15 @@ struct ContentView: View {
     @State private var selectedDate = Date()
     @State private var showSettings = false
     
+    // Layout constants
+    private let headerHeight: CGFloat = 52
+    private let weekStripHeight: CGFloat = 76
+    private let weekStripTopPadding: CGFloat = 4
+    
+    private var weekStripSpacerHeight: CGFloat {
+        headerHeight + weekStripHeight + weekStripTopPadding + 8
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -45,9 +54,9 @@ struct ContentView: View {
                     .padding(.bottom, 4)
                     .background(Color(uiColor: .systemBackground))
                     
-                    // Spacer for week strip
+                    // Spacer for week strip overlay
                     Color.clear
-                        .frame(height: 88)
+                        .frame(height: weekStripSpacerHeight)
                     
                     InfiniteDayScrollView(
                         selectedDate: $selectedDate,
@@ -61,11 +70,11 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     // Month and Year Header height
                     Color.clear
-                        .frame(height: 52)
+                        .frame(height: headerHeight)
                     
                     WeekStripView(selectedDate: $selectedDate)
                         .padding(.horizontal)
-                        .padding(.top, 4)
+                        .padding(.top, weekStripTopPadding)
                 }
             }
             .sheet(isPresented: $showSettings) {
