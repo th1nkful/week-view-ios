@@ -162,19 +162,18 @@ class CalendarViewModel: ObservableObject {
                     let (incomplete, completed) = await (incompleteFetched, completedFetched)
                     
                     // Combine and deduplicate by identifier
+                    // Prioritize reminders with due dates in the target range
                     var reminderMap: [String: EKReminder] = [:]
+                    
+                    // Add incomplete reminders (all have due dates in range)
                     for reminder in incomplete {
                         reminderMap[reminder.calendarItemIdentifier] = reminder
                     }
+                    
+                    // Add completed reminders (completion date in range)
+                    // These may or may not have due dates
                     for reminder in completed {
-                        // For completed reminders, prioritize by due date if available
-                        if let dueDate = reminder.dueDateComponents?.date,
-                           dueDate >= startOfDay && dueDate < endOfDay {
-                            reminderMap[reminder.calendarItemIdentifier] = reminder
-                        } else if reminderMap[reminder.calendarItemIdentifier] == nil {
-                            // Include completed reminders without due dates
-                            reminderMap[reminder.calendarItemIdentifier] = reminder
-                        }
+                        reminderMap[reminder.calendarItemIdentifier] = reminder
                     }
                     
                     reminders = reminderMap.values.map { ReminderModel(from: $0) }

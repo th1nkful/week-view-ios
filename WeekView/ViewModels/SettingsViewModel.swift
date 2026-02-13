@@ -68,11 +68,9 @@ class SettingsViewModel: ObservableObject {
             selectedReminderListIds = Set(savedReminderListIds)
         }
         
-        // Load showCompletedReminders without triggering didSet
-        let value = UserDefaults.standard.bool(forKey: showCompletedRemindersKey)
-        if value != showCompletedReminders {
-            _showCompletedReminders = Published(initialValue: value)
-        }
+        // Load showCompletedReminders - value is already false by default, 
+        // and didSet won't trigger on initialization, so this is safe
+        showCompletedReminders = UserDefaults.standard.bool(forKey: showCompletedRemindersKey)
     }
     
     private func saveSettings() {
