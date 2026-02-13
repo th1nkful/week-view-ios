@@ -16,9 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Select Xcode version
-        run: sudo xcode-select -switch /Applications/Xcode_15.2.app
-
       - name: Show Xcode version
         run: xcodebuild -version
 
