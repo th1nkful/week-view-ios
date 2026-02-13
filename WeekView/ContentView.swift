@@ -328,6 +328,30 @@ struct DaySection: View {
     let reminders: [ReminderModel]
     let onToggleReminder: (ReminderModel) -> Void
     
+    // Enum to represent either an event or reminder for unified display
+    enum TimedItem: Identifiable {
+        case event(EventModel)
+        case reminder(ReminderModel)
+        
+        var id: String {
+            switch self {
+            case .event(let event):
+                return "event_\(event.id)"
+            case .reminder(let reminder):
+                return "reminder_\(reminder.id)"
+            }
+        }
+        
+        var sortTime: Date? {
+            switch self {
+            case .event(let event):
+                return event.startDate
+            case .reminder(let reminder):
+                return reminder.dueDate
+            }
+        }
+    }
+    
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE"
@@ -375,33 +399,14 @@ struct DaySection: View {
         
         // Sort by time (events by start time, reminders by due date)
         // Items without a time (nil sortTime) are sorted to the end
+        // Use id as secondary sort for stable ordering when times are equal
         return items.sorted { item1, item2 in
             let time1 = item1.sortTime ?? Date.distantFuture
             let time2 = item2.sortTime ?? Date.distantFuture
+            if time1 == time2 {
+                return item1.id < item2.id
+            }
             return time1 < time2
-        }
-    }
-    
-    enum TimedItem: Identifiable {
-        case event(EventModel)
-        case reminder(ReminderModel)
-        
-        var id: String {
-            switch self {
-            case .event(let event):
-                return "event_\(event.id)"
-            case .reminder(let reminder):
-                return "reminder_\(reminder.id)"
-            }
-        }
-        
-        var sortTime: Date? {
-            switch self {
-            case .event(let event):
-                return event.startDate
-            case .reminder(let reminder):
-                return reminder.dueDate
-            }
         }
     }
 
