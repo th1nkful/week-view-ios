@@ -94,6 +94,7 @@ struct InfiniteDayScrollView: View {
     @Binding var selectedDate: Date
     @ObservedObject var calendarViewModel: CalendarViewModel
     @ObservedObject var settingsViewModel: SettingsViewModel
+    @Environment(\.scenePhase) private var scenePhase
     var topInset: CGFloat = 0
 
     @State private var visibleDates: [Date] = []
@@ -192,6 +193,11 @@ struct InfiniteDayScrollView: View {
             }
             .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
                 reloadAllVisibleDates()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    reloadAllVisibleDates()
+                }
             }
         }
     }
