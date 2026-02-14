@@ -467,11 +467,12 @@ struct DaySection: View {
                             }
                         }
                         .padding(.horizontal)
+                        .padding(.top, 4)
                     }
 
                     // Combined timed events and reminders, sorted by time
                     if !sortedTimedItems.isEmpty {
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 0) {
                             ForEach(sortedTimedItems) { item in
                                 switch item {
                                 case .event(let event):

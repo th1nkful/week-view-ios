@@ -10,6 +10,8 @@ struct ReminderModel: Identifiable {
     let calendar: EKCalendar
     let calendarItemIdentifier: String
     let calendarColor: Color
+    let listName: String
+    let isAllDay: Bool
 
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -25,10 +27,12 @@ struct ReminderModel: Identifiable {
         self.calendar = ekReminder.calendar
         self.calendarItemIdentifier = ekReminder.calendarItemIdentifier
         self.calendarColor = Color(cgColor: ekReminder.calendar.cgColor)
+        self.listName = ekReminder.calendar.title
+        self.isAllDay = ekReminder.dueDateComponents?.hour == nil
     }
 
     var dueDateString: String? {
-        guard let dueDate = dueDate else { return nil }
+        guard !isAllDay, let dueDate = dueDate else { return nil }
         return Self.timeFormatter.string(from: dueDate)
     }
 }
