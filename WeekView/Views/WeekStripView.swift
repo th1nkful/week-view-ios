@@ -40,6 +40,11 @@ struct WeekStripView: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: 76)
+        .background(
+            .ultraThinMaterial,
+            in: RoundedRectangle(cornerRadius: 16)
+        )
+        .shadow(color: Color.primary.opacity(0.1), radius: 8, x: 0, y: 4)
         .onChange(of: currentWeekOffset) { oldValue, newValue in
             // Only update selectedDate if the user swiped the week (not from scroll)
             guard !isUpdatingFromScroll else {
@@ -130,6 +135,8 @@ struct DayButton: View {
     let isSelected: Bool
     let action: () -> Void
     
+    private let selectedDayNameOpacity: CGFloat = 0.8
+    
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE"
@@ -151,11 +158,12 @@ struct DayButton: View {
             VStack(spacing: 4) {
                 Text(capitalizedDayName)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isSelected ? .white.opacity(selectedDayNameOpacity) : .secondary)
                 
                 Text(Self.dateFormatter.string(from: date))
                     .font(.title3)
                     .fontWeight(isSelected ? .bold : .regular)
+                    .foregroundStyle(isSelected ? .white : .primary)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 60)
@@ -163,7 +171,6 @@ struct DayButton: View {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(isSelected ? Color.accentColor : Color.clear)
             )
-            .foregroundStyle(isSelected ? .white : .primary)
         }
     }
 }

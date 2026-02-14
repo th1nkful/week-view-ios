@@ -7,60 +7,75 @@ struct ContentView: View {
     @State private var selectedDate = Date()
     @State private var showSettings = false
     
+    // Layout constants
+    private let headerHeight: CGFloat = 52
+    private let weekStripHeight: CGFloat = 76
+    private let weekStripTopPadding: CGFloat = 4
+    
+    private var weekStripSpacerHeight: CGFloat {
+        headerHeight + weekStripHeight + weekStripTopPadding + 8
+    }
+    
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // WeatherView hidden - requires paid Apple Developer account
-                // WeatherView(viewModel: weatherViewModel)
-                //     .padding(.horizontal)
-                //     .padding(.top)
-                
-                // Month and Year Header (left-aligned)
-                HStack(spacing: 4) {
+            ZStack(alignment: .top) {
+                VStack(spacing: 0) {
+                    // Month and Year Header (left-aligned)
                     HStack(spacing: 4) {
-                        Text(selectedDate.formatted(.dateTime.month(.wide)))
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
-                            .textCase(.uppercase)
-                        
-                        Text(selectedDate.formatted(.dateTime.year()))
-                            .font(.title2)
-                            .fontWeight(.regular)
-                            .foregroundStyle(.red)
+                        HStack(spacing: 4) {
+                            Text(selectedDate.formatted(.dateTime.month(.wide)))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                                .textCase(.uppercase)
+
+                            Text(selectedDate.formatted(.dateTime.year()))
+                                .font(.title2)
+                                .fontWeight(.regular)
+                                .foregroundStyle(.red)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedDate = Date()
+                        }
+
+                        Spacer()
+
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gear")
+                                .font(.title2)
+                                .foregroundStyle(.primary)
+                        }
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedDate = Date()
-                    }
-                    
-                    Spacer()
-                    
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gear")
-                            .font(.title2)
-                            .foregroundStyle(.primary)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
-                
-                WeekStripView(selectedDate: $selectedDate)
                     .padding(.horizontal)
-                    .padding(.top, 4)
-                    .overlay(alignment: .bottom) {
-                        Divider()
-                            .background(Color(uiColor: .separator))
-                    }
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+                    .background(Color(uiColor: .systemBackground))
+                    
+                    // Spacer for week strip overlay
+                    Color.clear
+                        .frame(height: weekStripSpacerHeight)
+                    
+                    InfiniteDayScrollView(
+                        selectedDate: $selectedDate,
+                        calendarViewModel: calendarViewModel,
+                        settingsViewModel: settingsViewModel
+                    )
+                }
+                .background(Color(uiColor: .systemBackground))
                 
-                InfiniteDayScrollView(
-                    selectedDate: $selectedDate,
-                    calendarViewModel: calendarViewModel,
-                    settingsViewModel: settingsViewModel
-                )
+                // Floating week strip overlay
+                VStack(spacing: 0) {
+                    // Month and Year Header height
+                    Color.clear
+                        .frame(height: headerHeight)
+                    
+                    WeekStripView(selectedDate: $selectedDate)
+                        .padding(.horizontal)
+                        .padding(.top, weekStripTopPadding)
+                }
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView(viewModel: settingsViewModel)
@@ -199,6 +214,7 @@ struct InfiniteDayScrollView: View {
                 }
             }
         }
+        .background(Color(uiColor: .systemGroupedBackground))
     }
     
     private func reloadAllVisibleDates() {
