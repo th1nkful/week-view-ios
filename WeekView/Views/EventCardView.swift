@@ -16,31 +16,21 @@ struct EventCardView: View {
                     .cornerRadius(2)
 
                 VStack(alignment: .leading, spacing: 2) {
+                    Text(event.duration)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+
                     Text(event.title)
                         .font(.body)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.leading)
 
-                    if let location = event.simplifiedLocation {
-                        Text(location)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(event.startTimeString)
+                    Text(event.subtitleText)
                         .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.primary)
-
-                    Text(event.endTimeString)
-                        .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
             .padding(.vertical, 8)

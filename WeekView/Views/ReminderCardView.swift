@@ -7,51 +7,51 @@ struct ReminderCardView: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Button {
-                onToggle()
-            } label: {
-                Image(systemName: reminder.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(reminder.calendarColor)
-            }
-            .buttonStyle(.plain)
+        Button {
+            openReminderInApp()
+        } label: {
+            HStack(alignment: .center, spacing: 8) {
+                Rectangle()
+                    .fill(reminder.calendarColor)
+                    .frame(width: 4)
+                    .cornerRadius(2)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(reminder.title)
-                    .font(.body)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                    .strikethrough(reminder.isCompleted)
-                    .multilineTextAlignment(.leading)
-
-                if let dueDateString = reminder.dueDateString {
-                    HStack {
-                        Image(systemName: "clock")
-                            .font(.caption)
+                VStack(alignment: .leading, spacing: 2) {
+                    if let dueDateString = reminder.dueDateString {
                         Text(dueDateString)
                             .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
                     }
-                    .foregroundStyle(.secondary)
+
+                    Text(reminder.title)
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                        .strikethrough(reminder.isCompleted)
+                        .multilineTextAlignment(.leading)
+
+                    Text(reminder.listName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
+
+                Spacer()
+
+                Button {
+                    onToggle()
+                } label: {
+                    Image(systemName: reminder.isCompleted ? "checkmark.circle.fill" : "circle")
+                        .font(.body)
+                        .foregroundStyle(reminder.calendarColor)
+                }
+                .buttonStyle(.plain)
             }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-        )
-        .contentShape(RoundedRectangle(cornerRadius: 12))
-        .onTapGesture {
-            openReminderInApp()
-        }
+        .buttonStyle(.plain)
     }
 
     private func openReminderInApp() {
