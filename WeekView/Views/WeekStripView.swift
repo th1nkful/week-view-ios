@@ -5,9 +5,6 @@ struct WeekStripView: View {
     @State private var currentWeekOffset: Int = 0
     @State private var isUpdatingFromScroll: Bool = false
 
-    private let weekTransitionDelay: TimeInterval = 0.3
-    private let flagResetDelay: TimeInterval = 0.1
-
     private var calendar: Calendar {
         var cal = Calendar.current
         cal.firstWeekday = 2 // Monday
@@ -41,37 +38,26 @@ struct WeekStripView: View {
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: 76)
         .onChange(of: currentWeekOffset) { _, newValue in
-            // Only update selectedDate if the user swiped the week (not from scroll)
-            guard !isUpdatingFromScroll else {
-                // Reset the flag after a short delay to handle the update
-                DispatchQueue.main.asyncAfter(deadline: .now() + flagResetDelay) {
-                    isUpdatingFromScroll = false
-                }
-                return
-            }
+            guard !isUpdatingFromScroll else { return }
 
-            // Delay the date selection to make the transition smoother
-            DispatchQueue.main.asyncAfter(deadline: .now() + weekTransitionDelay) {
-                // When week changes, select appropriate day
-                let newWeekDates = getWeekDates(for: newValue)
-
-                // Check if current week contains today
-                let today = Date()
-                if newWeekDates.contains(where: { calendar.isDate($0, inSameDayAs: today) }) {
-                    // Current week - select today
-                    selectedDate = today
-                } else if let firstDay = newWeekDates.first {
-                    // Other week - select first day (Monday)
-                    selectedDate = firstDay
-                }
+            let newWeekDates = getWeekDates(for: newValue)
+            let today = Date()
+            if newWeekDates.contains(where: { calendar.isDate($0, inSameDayAs: today) }) {
+                selectedDate = today
+            } else if let firstDay = newWeekDates.first {
+                selectedDate = firstDay
             }
         }
         .onChange(of: selectedDate) { _, newValue in
-            // Update week offset when date is selected from elsewhere (like scrolling)
             let newWeekOffset = getWeekOffset(for: newValue)
             if newWeekOffset != currentWeekOffset {
                 isUpdatingFromScroll = true
-                currentWeekOffset = newWeekOffset
+                withAnimation {
+                    currentWeekOffset = newWeekOffset
+                }
+                DispatchQueue.main.async {
+                    isUpdatingFromScroll = false
+                }
             }
         }
         .onAppear {

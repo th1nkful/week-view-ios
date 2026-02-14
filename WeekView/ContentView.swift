@@ -102,7 +102,7 @@ struct InfiniteDayScrollView: View {
     @State private var isLoadingMoreWeeks = false
     @State private var hasInitializedWithPermissions = false
     @State private var scrollPosition: Date?
-    @State private var isUserScrolling = false
+    @State private var isUpdatingFromScroll = false
 
     private var calendar: Calendar {
         var cal = Calendar.current
@@ -129,75 +129,61 @@ struct InfiniteDayScrollView: View {
     }
 
     private var scrollContent: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                dayList
-            }
-            .scrollPosition(id: $scrollPosition)
-            .onAppear {
-                scrollPosition = calendar.startOfDay(for: selectedDate)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation {
-                        proxy.scrollTo(calendar.startOfDay(for: selectedDate))
-                    }
-                }
-            }
-            .onChange(of: selectedDate) { _, newValue in
-                guard !isUserScrolling else { return }
+        ScrollView {
+            dayList
+        }
+        .scrollPosition(id: $scrollPosition)
+        .contentMargins(.top, topInset + 8, for: .scrollContent)
+        .defaultScrollAnchor(.top)
+        .scrollTargetBehavior(.viewAligned(limitBehavior: .never))
+        .onChange(of: selectedDate) { _, newValue in
+            guard !isUpdatingFromScroll else { return }
 
-                if !visibleDates.contains(where: { calendar.isDate($0, inSameDayAs: newValue) }) {
-                    loadWeek(containing: newValue)
-                }
+            if !visibleDates.contains(where: { calendar.isDate($0, inSameDayAs: newValue) }) {
+                loadWeek(containing: newValue)
+            }
 
-                scrollPosition = calendar.startOfDay(for: newValue)
-                Task {
-                    try? await Task.sleep(for: .milliseconds(100))
-                    withAnimation {
-                        proxy.scrollTo(calendar.startOfDay(for: newValue))
-                    }
+            let target = calendar.startOfDay(for: newValue)
+            if scrollPosition != target {
+                scrollPosition = target
+            }
+        }
+        .onChange(of: scrollPosition) { _, newValue in
+            guard let newValue = newValue else { return }
+
+            if let matchingDate = visibleDates.first(where: {
+                calendar.startOfDay(for: $0) == newValue
+            }) {
+                if !calendar.isDate(selectedDate, inSameDayAs: matchingDate) {
+                    isUpdatingFromScroll = true
+                    selectedDate = matchingDate
+                    isUpdatingFromScroll = false
                 }
             }
-            .onChange(of: scrollPosition) { _, newValue in
-                guard let newValue = newValue else { return }
-
-                isUserScrolling = true
-
-                if let matchingDate = visibleDates.first(where: {
-                    calendar.startOfDay(for: $0) == newValue
-                }) {
-                    if !calendar.isDate(selectedDate, inSameDayAs: matchingDate) {
-                        selectedDate = matchingDate
-                    }
-                }
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    isUserScrolling = false
-                }
-            }
-            .onChange(of: calendarViewModel.hasCalendarAccess) { _, newValue in
-                if newValue && !hasInitializedWithPermissions {
-                    hasInitializedWithPermissions = true
-                    reloadAllVisibleDates()
-                }
-            }
-            .onChange(of: calendarViewModel.hasRemindersAccess) { _, newValue in
-                if newValue {
-                    reloadAllVisibleDates()
-                }
-            }
-            .onChange(of: settingsViewModel.selectedCalendarIds) { _, _ in
+        }
+        .onChange(of: calendarViewModel.hasCalendarAccess) { _, newValue in
+            if newValue && !hasInitializedWithPermissions {
+                hasInitializedWithPermissions = true
                 reloadAllVisibleDates()
             }
-            .onChange(of: settingsViewModel.selectedReminderListIds) { _, _ in
+        }
+        .onChange(of: calendarViewModel.hasRemindersAccess) { _, newValue in
+            if newValue {
                 reloadAllVisibleDates()
             }
-            .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
+        }
+        .onChange(of: settingsViewModel.selectedCalendarIds) { _, _ in
+            reloadAllVisibleDates()
+        }
+        .onChange(of: settingsViewModel.selectedReminderListIds) { _, _ in
+            reloadAllVisibleDates()
+        }
+        .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
+            reloadAllVisibleDates()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
                 reloadAllVisibleDates()
-            }
-            .onChange(of: scenePhase) { _, newPhase in
-                if newPhase == .active {
-                    reloadAllVisibleDates()
-                }
             }
         }
     }
@@ -226,7 +212,7 @@ struct InfiniteDayScrollView: View {
                 }
             }
         }
-        .padding(.top, topInset + 8)
+        .scrollTargetLayout()
     }
 
     private func reloadAllVisibleDates() {
@@ -240,15 +226,27 @@ struct InfiniteDayScrollView: View {
     }
 
     private func loadCurrentWeek() {
-        let weekDates = getWeekDates(for: selectedDate)
-        visibleDates = weekDates
+        var allDates: [Date] = []
 
-        if let nextWeekDate = calendar.date(byAdding: .day, value: 7, to: selectedDate) {
-            let nextWeekDates = getWeekDates(for: nextWeekDate)
-            visibleDates.append(contentsOf: nextWeekDates)
+        // Previous week
+        if let prevWeekDate = calendar.date(byAdding: .day, value: -7, to: selectedDate) {
+            allDates.append(contentsOf: getWeekDates(for: prevWeekDate))
         }
 
-        // Load events for all loaded weeks
+        // Current week
+        allDates.append(contentsOf: getWeekDates(for: selectedDate))
+
+        // Next 2 weeks
+        if let nextWeekDate = calendar.date(byAdding: .day, value: 7, to: selectedDate) {
+            allDates.append(contentsOf: getWeekDates(for: nextWeekDate))
+        }
+        if let nextNextWeekDate = calendar.date(byAdding: .day, value: 14, to: selectedDate) {
+            allDates.append(contentsOf: getWeekDates(for: nextNextWeekDate))
+        }
+
+        visibleDates = allDates
+        scrollPosition = calendar.startOfDay(for: selectedDate)
+
         Task {
             for date in visibleDates {
                 await loadEventsForDate(date)
@@ -264,11 +262,17 @@ struct InfiniteDayScrollView: View {
         }
 
         if !newDates.isEmpty {
-            // Insert dates in chronological order
-            visibleDates.append(contentsOf: newDates)
-            visibleDates.sort()
+            let sortedNewDates = newDates.sorted()
 
-            // Load events for the new dates
+            // Insert at correct position to maintain chronological order
+            if let firstNew = sortedNewDates.first,
+               let firstExisting = visibleDates.first,
+               firstNew < firstExisting {
+                visibleDates.insert(contentsOf: sortedNewDates, at: 0)
+            } else {
+                visibleDates.append(contentsOf: sortedNewDates)
+            }
+
             Task {
                 for weekDate in newDates {
                     await loadEventsForDate(weekDate)
@@ -290,30 +294,31 @@ struct InfiniteDayScrollView: View {
         // Prevent concurrent week loading
         guard !isLoadingMoreWeeks else { return }
 
-        // Check if we need to load adjacent weeks
         guard let firstDate = visibleDates.first,
               let lastDate = visibleDates.last else { return }
 
-        // Only load more weeks when we're actually at the edges
-        // If we're viewing the first day, load the previous week
-        if calendar.isDate(date, inSameDayAs: firstDate) {
+        // Find index of the appearing date
+        guard let dateIndex = visibleDates.firstIndex(where: {
+            calendar.isDate($0, inSameDayAs: date)
+        }) else { return }
+
+        // Load previous week when within 3 days of the start
+        if dateIndex < 3 {
             isLoadingMoreWeeks = true
             if let previousWeekDate = calendar.date(byAdding: .day, value: -7, to: firstDate) {
                 loadWeek(containing: previousWeekDate)
             }
-            // Small delay to prevent rapid loading
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isLoadingMoreWeeks = false
             }
         }
 
-        // If we're viewing the last day, load the next week
-        if calendar.isDate(date, inSameDayAs: lastDate) {
+        // Load next week when within 3 days of the end
+        if dateIndex >= visibleDates.count - 3 {
             isLoadingMoreWeeks = true
             if let nextWeekDate = calendar.date(byAdding: .day, value: 7, to: lastDate) {
                 loadWeek(containing: nextWeekDate)
             }
-            // Small delay to prevent rapid loading
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isLoadingMoreWeeks = false
             }
