@@ -2,6 +2,12 @@ import Foundation
 import SwiftUI
 import EventKit
 
+struct CalendarSourceGroup: Identifiable {
+    let id: String
+    let title: String
+    let calendars: [EKCalendar]
+}
+
 @MainActor
 class SettingsViewModel: ObservableObject {
     @Published var selectedCalendarIds: Set<String> = []
@@ -13,6 +19,26 @@ class SettingsViewModel: ObservableObject {
     }
     @Published var availableCalendars: [EKCalendar] = []
     @Published var availableReminderLists: [EKCalendar] = []
+
+    var calendarsGroupedBySource: [CalendarSourceGroup] {
+        Dictionary(grouping: availableCalendars, by: { $0.source.sourceIdentifier })
+            .map { CalendarSourceGroup(
+                id: $0.key,
+                title: $0.value.first?.source.title ?? "",
+                calendars: $0.value.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+            )}
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
+    var reminderListsGroupedBySource: [CalendarSourceGroup] {
+        Dictionary(grouping: availableReminderLists, by: { $0.source.sourceIdentifier })
+            .map { CalendarSourceGroup(
+                id: $0.key,
+                title: $0.value.first?.source.title ?? "",
+                calendars: $0.value.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+            )}
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
 
     private let eventStore = EKEventStore()
     private let selectedCalendarsKey = "selectedCalendarIds"

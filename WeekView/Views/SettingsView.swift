@@ -28,81 +28,31 @@ struct SettingsView: View {
                     Text("About")
                 }
 
-                // Calendar Selection
+                // Calendar & Reminder Sub-Pages
                 Section {
-                    if viewModel.availableCalendars.isEmpty {
-                        Text("No calendars available")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.availableCalendars, id: \.calendarIdentifier) { calendar in
-                            HStack {
-                                Circle()
-                                    .fill(Color(cgColor: calendar.cgColor))
-                                    .frame(width: 12, height: 12)
-
-                                Text(calendar.title)
-                                    .font(.body)
-
-                                Spacer()
-
-                                if viewModel.selectedCalendarIds.contains(calendar.calendarIdentifier) {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(.blue)
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                viewModel.toggleCalendar(calendar)
-                            }
+                    NavigationLink {
+                        CalendarSettingsView(viewModel: viewModel)
+                    } label: {
+                        HStack {
+                            Image(systemName: "calendar")
+                            Text("Calendars")
+                            Spacer()
+                            Text("\(viewModel.selectedCalendarIds.count)/\(viewModel.availableCalendars.count)")
+                                .foregroundStyle(.secondary)
                         }
                     }
-                } header: {
-                    Text("Calendars")
-                } footer: {
-                    Text("Select which calendars to display")
-                }
 
-                // Reminder Lists Selection
-                Section {
-                    if viewModel.availableReminderLists.isEmpty {
-                        Text("No reminder lists available")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.availableReminderLists, id: \.calendarIdentifier) { list in
-                            HStack {
-                                Circle()
-                                    .fill(Color(cgColor: list.cgColor))
-                                    .frame(width: 12, height: 12)
-
-                                Text(list.title)
-                                    .font(.body)
-
-                                Spacer()
-
-                                if viewModel.selectedReminderListIds.contains(list.calendarIdentifier) {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(.blue)
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                viewModel.toggleReminderList(list)
-                            }
+                    NavigationLink {
+                        ReminderSettingsView(viewModel: viewModel)
+                    } label: {
+                        HStack {
+                            Image(systemName: "checklist")
+                            Text("Reminders")
+                            Spacer()
+                            Text("\(viewModel.selectedReminderListIds.count)/\(viewModel.availableReminderLists.count)")
+                                .foregroundStyle(.secondary)
                         }
                     }
-                } header: {
-                    Text("Reminder Lists")
-                } footer: {
-                    Text("Select which reminder lists to display")
-                }
-
-                // Reminder Options
-                Section {
-                    Toggle("Show Completed Reminders", isOn: $viewModel.showCompletedReminders)
-                } header: {
-                    Text("Reminder Options")
-                } footer: {
-                    Text("Display reminders that have been marked as complete")
                 }
             }
             .navigationTitle("Settings")

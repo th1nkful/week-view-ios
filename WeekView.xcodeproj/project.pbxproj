@@ -22,6 +22,8 @@
 		013 /* WeatherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113 /* WeatherView.swift */; };
 		014 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115 /* SettingsViewModel.swift */; };
 		015 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116 /* SettingsView.swift */; };
+		016 /* CalendarSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117 /* CalendarSettingsView.swift */; };
+		017 /* ReminderSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118 /* ReminderSettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +44,8 @@
 		114 /* WeekView.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WeekView.entitlements; sourceTree = "<group>"; };
 		115 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		116 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		117 /* CalendarSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSettingsView.swift; sourceTree = "<group>"; };
+		118 /* ReminderSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +118,8 @@
 				112 /* ReminderCardView.swift */,
 				113 /* WeatherView.swift */,
 				116 /* SettingsView.swift */,
+				117 /* CalendarSettingsView.swift */,
+				118 /* ReminderSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -201,6 +207,8 @@
 				013 /* WeatherView.swift in Sources */,
 				014 /* SettingsViewModel.swift in Sources */,
 				015 /* SettingsView.swift in Sources */,
+				016 /* CalendarSettingsView.swift in Sources */,
+				017 /* ReminderSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
