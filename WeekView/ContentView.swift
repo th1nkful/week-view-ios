@@ -217,10 +217,8 @@ struct InfiniteDayScrollView: View {
 
     private func reloadAllVisibleDates() {
         Task {
-            // Clear cached events and reload all visible dates
-            loadedEvents.removeAll()
             for date in visibleDates {
-                await loadEventsForDate(date)
+                await loadEventsForDate(date, forceReload: true)
             }
         }
     }
