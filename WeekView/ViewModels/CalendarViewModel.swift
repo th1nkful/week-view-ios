@@ -153,19 +153,17 @@ class CalendarViewModel: ObservableObject {
                         calendars: reminderListsToUse
                     )
 
-                    // Fetch both types concurrently
-                    async let incompleteFetched: [EKReminder] = withCheckedContinuation { continuation in
+                    // Fetch both types
+                    let incomplete: [EKReminder] = await withCheckedContinuation { continuation in
                         eventStore.fetchReminders(matching: incompletePredicate) { r in
                             continuation.resume(returning: r ?? [])
                         }
                     }
-                    async let completedFetched: [EKReminder] = withCheckedContinuation { continuation in
+                    let completed: [EKReminder] = await withCheckedContinuation { continuation in
                         eventStore.fetchReminders(matching: completedPredicate) { r in
                             continuation.resume(returning: r ?? [])
                         }
                     }
-
-                    let (incomplete, completed) = await (incompleteFetched, completedFetched)
 
                     // Deduplicate: if a reminder appears in both (e.g., completed today with due date today),
                     // the completed version is used (more current state)
