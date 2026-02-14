@@ -22,7 +22,7 @@ struct EventCardView: View {
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.leading)
 
-                    if let location = event.location {
+                    if let location = event.simplifiedLocation {
                         Text(location)
                             .font(.caption)
                             .foregroundStyle(.secondary)

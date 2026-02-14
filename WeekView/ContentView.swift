@@ -187,13 +187,13 @@ struct InfiniteDayScrollView: View {
                             reloadAllVisibleDates()
                         }
                     }
-                    .onChange(
-                        of: (
-                            settingsViewModel.selectedCalendarIds,
-                            settingsViewModel.selectedReminderListIds,
-                            settingsViewModel.showCompletedReminders
-                        )
-                    ) { _, _ in
+                    .onChange(of: settingsViewModel.selectedCalendarIds) { _, _ in
+                        reloadAllVisibleDates()
+                    }
+                    .onChange(of: settingsViewModel.selectedReminderListIds) { _, _ in
+                        reloadAllVisibleDates()
+                    }
+                    .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
                         reloadAllVisibleDates()
                     }
                 }
@@ -328,6 +328,30 @@ struct DaySection: View {
     let reminders: [ReminderModel]
     let onToggleReminder: (ReminderModel) -> Void
     
+    // Enum to represent either an event or reminder for unified display
+    enum TimedItem: Identifiable {
+        case event(EventModel)
+        case reminder(ReminderModel)
+        
+        var id: String {
+            switch self {
+            case .event(let event):
+                return "event_\(event.id)"
+            case .reminder(let reminder):
+                return "reminder_\(reminder.id)"
+            }
+        }
+        
+        var sortTime: Date? {
+            switch self {
+            case .event(let event):
+                return event.startDate
+            case .reminder(let reminder):
+                return reminder.dueDate
+            }
+        }
+    }
+    
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE"
@@ -357,6 +381,33 @@ struct DaySection: View {
 
     private var timedEvents: [EventModel] {
         events.filter { !$0.isAllDay }
+    }
+    
+    // Combined items sorted by time
+    private var sortedTimedItems: [TimedItem] {
+        var items: [TimedItem] = []
+        
+        // Add timed events
+        for event in timedEvents {
+            items.append(.event(event))
+        }
+        
+        // Add reminders
+        for reminder in reminders {
+            items.append(.reminder(reminder))
+        }
+        
+        // Sort by time (events by start time, reminders by due date)
+        // Items without a time (nil sortTime) are sorted to the end
+        // Use id as secondary sort for stable ordering when times are equal
+        return items.sorted { item1, item2 in
+            let time1 = item1.sortTime ?? Date.distantFuture
+            let time2 = item2.sortTime ?? Date.distantFuture
+            if time1 == time2 {
+                return item1.id < item2.id
+            }
+            return time1 < time2
+        }
     }
 
     var body: some View {
@@ -391,30 +442,22 @@ struct DaySection: View {
                         .padding(.horizontal)
                     }
 
-                    if !timedEvents.isEmpty {
+                    // Combined timed events and reminders, sorted by time
+                    if !sortedTimedItems.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
-                            ForEach(timedEvents) { event in
-                                EventCardView(event: event)
+                            ForEach(sortedTimedItems) { item in
+                                switch item {
+                                case .event(let event):
+                                    EventCardView(event: event)
+                                        .padding(.horizontal, 8)
+                                case .reminder(let reminder):
+                                    ReminderCardView(reminder: reminder) {
+                                        onToggleReminder(reminder)
+                                    }
                                     .padding(.horizontal, 8)
-                            }
-                        }
-                    }
-
-                    if !reminders.isEmpty {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Reminders")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 8)
-
-                            ForEach(reminders) { reminder in
-                                ReminderCardView(reminder: reminder) {
-                                    onToggleReminder(reminder)
                                 }
-                                .padding(.horizontal, 8)
                             }
                         }
-                        .padding(.top, events.isEmpty ? 0 : 4)
                     }
                 }
             }
