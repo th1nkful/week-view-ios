@@ -158,7 +158,7 @@ struct DayButton: View {
             VStack(spacing: 4) {
                 Text(capitalizedDayName)
                     .font(.caption)
-                    .foregroundStyle(isSelected ? .white.opacity(selectedDayNameOpacity) : .secondary)
+                    .foregroundStyle(isSelected ? .white.opacity(selectedDayNameOpacity) : .primary.opacity(0.6))
 
                 Text(Self.dateFormatter.string(from: date))
                     .font(.title3)
