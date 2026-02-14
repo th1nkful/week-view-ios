@@ -5,6 +5,10 @@ struct ReminderSettingsView: View {
 
     var body: some View {
         List {
+            Section {
+                Toggle("Show completed", isOn: $viewModel.showCompletedReminders)
+            }
+
             let groups = viewModel.reminderListsGroupedBySource
             if groups.isEmpty {
                 Text("No reminder lists available")
@@ -37,14 +41,6 @@ struct ReminderSettingsView: View {
                         Text(group.title)
                     }
                 }
-            }
-
-            Section {
-                Toggle("Show Completed Reminders", isOn: $viewModel.showCompletedReminders)
-            } header: {
-                Text("Options")
-            } footer: {
-                Text("Display reminders that have been marked as complete")
             }
         }
         .navigationTitle("Reminders")

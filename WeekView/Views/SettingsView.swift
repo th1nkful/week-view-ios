@@ -7,27 +7,6 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // About Section
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Week View")
-                            .font(.title2)
-                            .fontWeight(.bold)
-
-                        Text("A simple and elegant week calendar view for iOS")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-
-                        Text("Version 1.0.0")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 4)
-                    }
-                    .padding(.vertical, 8)
-                } header: {
-                    Text("About")
-                }
-
                 // Calendar & Reminder Sub-Pages
                 Section {
                     NavigationLink {
@@ -37,7 +16,7 @@ struct SettingsView: View {
                             Image(systemName: "calendar")
                             Text("Calendars")
                             Spacer()
-                            Text("\(viewModel.selectedCalendarIds.count)/\(viewModel.availableCalendars.count)")
+                            Text(viewModel.selectedCalendarIds.isEmpty ? "None" : "\(viewModel.selectedCalendarIds.count)")
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -49,18 +28,42 @@ struct SettingsView: View {
                             Image(systemName: "checklist")
                             Text("Reminders")
                             Spacer()
-                            Text("\(viewModel.selectedReminderListIds.count)/\(viewModel.availableReminderLists.count)")
+                            Text(viewModel.selectedReminderListIds.isEmpty ? "None" : "\(viewModel.selectedReminderListIds.count)")
                                 .foregroundStyle(.secondary)
                         }
                     }
                 }
+
+                // About Section
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Week View")
+                            .font(.title2)
+                            .fontWeight(.bold)
+
+                        Text("An elegant calendar week view. Built with Claude and Copilot ✨")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 8)
+
+                    HStack {
+                        Text("Version")
+                        Spacer()
+                        Text("1.0.0")
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
             .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
                         dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .fontWeight(.semibold)
                     }
                 }
             }
