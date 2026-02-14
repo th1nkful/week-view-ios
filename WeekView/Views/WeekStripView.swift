@@ -135,6 +135,8 @@ struct DayButton: View {
     let isSelected: Bool
     let action: () -> Void
     
+    private let selectedDayNameOpacity: CGFloat = 0.8
+    
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE"
@@ -156,7 +158,7 @@ struct DayButton: View {
             VStack(spacing: 4) {
                 Text(capitalizedDayName)
                     .font(.caption)
-                    .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                    .foregroundStyle(isSelected ? .white.opacity(selectedDayNameOpacity) : .secondary)
                 
                 Text(Self.dateFormatter.string(from: date))
                     .font(.title3)
