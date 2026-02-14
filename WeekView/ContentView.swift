@@ -19,7 +19,11 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
-                // Bottom layer: scroll view fills full screen
+                // Base layer: unified background color
+                Color(uiColor: .systemGroupedBackground)
+                    .ignoresSafeArea()
+
+                // Scroll view with transparent background
                 InfiniteDayScrollView(
                     selectedDate: $selectedDate,
                     calendarViewModel: calendarViewModel,
@@ -27,9 +31,8 @@ struct ContentView: View {
                     topInset: weekStripSpacerHeight
                 )
 
-                // Top layer: unified glassmorphic header
+                // Top layer: single glass panel for header + week strip
                 VStack(spacing: 0) {
-                    // Month and Year Header (left-aligned)
                     HStack(spacing: 4) {
                         HStack(spacing: 4) {
                             Text(selectedDate.formatted(.dateTime.month(.wide)))
@@ -60,7 +63,7 @@ struct ContentView: View {
                         .buttonStyle(.plain)
                     }
                     .padding(.horizontal)
-                    .padding(.top, 8)
+                    .padding(.top, 12)
                     .padding(.bottom, 4)
 
                     WeekStripView(selectedDate: $selectedDate)
@@ -68,8 +71,11 @@ struct ContentView: View {
                         .padding(.top, weekStripTopPadding)
                         .padding(.bottom, 8)
                 }
-                .background(.ultraThinMaterial)
-                .ignoresSafeArea(edges: .top)
+                .background {
+                    UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16)
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea(edges: .top)
+                }
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView(viewModel: settingsViewModel)
@@ -118,7 +124,7 @@ struct InfiniteDayScrollView: View {
                 scrollContent
             }
         }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .background(.clear)
     }
 
     private var scrollContent: some View {
