@@ -7,19 +7,19 @@ class WeatherViewModel: NSObject, ObservableObject {
     @Published var weather: WeatherModel?
     @Published var isLoading = false
     @Published var errorMessage: String?
-    
+
     private let weatherService = WeatherService.shared
     private let locationManager = CLLocationManager()
     private var currentLocation: CLLocation?
-    
+
     override init() {
         super.init()
         locationManager.delegate = self
     }
-    
+
     func requestLocationAndLoadWeather() async {
         let authStatus = locationManager.authorizationStatus
-        
+
         if authStatus == .notDetermined {
             locationManager.requestWhenInUseAuthorization()
         } else if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
@@ -28,11 +28,11 @@ class WeatherViewModel: NSObject, ObservableObject {
             errorMessage = "Location access denied"
         }
     }
-    
+
     private func loadWeather(for location: CLLocation) async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
             let currentWeather = try await weatherService.weather(for: location).currentWeather
             weather = WeatherModel(from: currentWeather)
@@ -40,7 +40,7 @@ class WeatherViewModel: NSObject, ObservableObject {
             errorMessage = "Unable to load weather"
             print("Error loading weather: \(error.localizedDescription)")
         }
-        
+
         isLoading = false
     }
 }
@@ -48,7 +48,7 @@ class WeatherViewModel: NSObject, ObservableObject {
 extension WeatherViewModel: CLLocationManagerDelegate {
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        
+
         Task { @MainActor in
             if currentLocation == nil {
                 currentLocation = location
@@ -57,18 +57,18 @@ extension WeatherViewModel: CLLocationManagerDelegate {
             }
         }
     }
-    
+
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
             errorMessage = "Location unavailable"
             print("Location error: \(error.localizedDescription)")
         }
     }
-    
+
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
             let status = manager.authorizationStatus
-            
+
             if status == .authorizedWhenInUse || status == .authorizedAlways {
                 manager.startUpdatingLocation()
             } else if status == .denied || status == .restricted {

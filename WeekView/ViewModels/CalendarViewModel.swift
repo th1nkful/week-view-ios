@@ -11,10 +11,10 @@ class CalendarViewModel: ObservableObject {
     @Published var hasRemindersAccess = false
     @Published var currentWeather: WeatherModel?
     @Published var weatherError: Error?
-    
+
     private let eventStore = EKEventStore()
     private let weatherService = WeatherService.shared
-    
+
     func requestAccess() async {
         do {
             if #available(iOS 17.0, macOS 14.0, *) {
@@ -28,7 +28,7 @@ class CalendarViewModel: ObservableObject {
             print("Error requesting access: \(error.localizedDescription)")
         }
     }
-    
+
     func loadEvents(for date: Date) async {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
@@ -49,7 +49,7 @@ class CalendarViewModel: ObservableObject {
 
         await loadReminders(for: startOfDay)
     }
-    
+
     private func loadReminders(for date: Date) async {
         guard hasRemindersAccess else { return }
 
@@ -72,16 +72,16 @@ class CalendarViewModel: ObservableObject {
         reminders = fetchedReminders.map { ReminderModel(from: $0) }
             .sorted { ($0.dueDate ?? Date.distantFuture) < ($1.dueDate ?? Date.distantFuture) }
     }
-    
+
     func toggleReminder(_ reminder: ReminderModel) {
         guard hasRemindersAccess else { return }
-        
+
         if let ekReminder = eventStore.calendarItem(withIdentifier: reminder.calendarItemIdentifier) as? EKReminder {
             ekReminder.isCompleted.toggle()
-            
+
             do {
                 try eventStore.save(ekReminder, commit: true)
-                
+
                 if let index = reminders.firstIndex(where: { $0.id == reminder.id }) {
                     reminders[index] = ReminderModel(from: ekReminder)
                 }
@@ -90,8 +90,13 @@ class CalendarViewModel: ObservableObject {
             }
         }
     }
-    
-    func fetchEvents(for date: Date, selectedCalendarIds: Set<String>? = nil, selectedReminderListIds: Set<String>? = nil, showCompletedReminders: Bool = false) async -> (events: [EventModel], reminders: [ReminderModel]) {
+
+    func fetchEvents(
+        for date: Date,
+        selectedCalendarIds: Set<String>? = nil,
+        selectedReminderListIds: Set<String>? = nil,
+        showCompletedReminders: Bool = false
+    ) async -> (events: [EventModel], reminders: [ReminderModel]) {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
@@ -112,7 +117,7 @@ class CalendarViewModel: ObservableObject {
                 } else {
                     calendarsToUse = nil
                 }
-                
+
                 let predicate = eventStore.predicateForEvents(withStart: startOfDay, end: endOfDay, calendars: calendarsToUse)
                 let ekEvents = eventStore.events(matching: predicate)
                 events = ekEvents.map { EventModel(from: $0) }.sorted { $0.startDate < $1.startDate }
@@ -133,7 +138,7 @@ class CalendarViewModel: ObservableObject {
                 } else {
                     reminderListsToUse = nil
                 }
-                
+
                 // Fetch reminders based on showCompletedReminders setting
                 if showCompletedReminders {
                     // Fetch both incomplete and completed reminders
@@ -147,7 +152,7 @@ class CalendarViewModel: ObservableObject {
                         ending: endOfDay,
                         calendars: reminderListsToUse
                     )
-                    
+
                     // Fetch both types concurrently
                     async let incompleteFetched: [EKReminder] = withCheckedContinuation { continuation in
                         eventStore.fetchReminders(matching: incompletePredicate) { r in
@@ -159,24 +164,24 @@ class CalendarViewModel: ObservableObject {
                             continuation.resume(returning: r ?? [])
                         }
                     }
-                    
+
                     let (incomplete, completed) = await (incompleteFetched, completedFetched)
-                    
+
                     // Deduplicate: if a reminder appears in both (e.g., completed today with due date today),
                     // the completed version is used (more current state)
                     var reminderMap: [String: EKReminder] = [:]
-                    
+
                     // Add incomplete reminders first
                     for reminder in incomplete {
                         reminderMap[reminder.calendarItemIdentifier] = reminder
                     }
-                    
+
                     // Add/overwrite with completed reminders
                     // This ensures if a reminder was just completed, we show the completed version
                     for reminder in completed {
                         reminderMap[reminder.calendarItemIdentifier] = reminder
                     }
-                    
+
                     reminders = reminderMap.values.map { ReminderModel(from: $0) }
                         .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
                 } else {
@@ -184,13 +189,13 @@ class CalendarViewModel: ObservableObject {
                     let predicate = eventStore.predicateForIncompleteReminders(
                         withDueDateStarting: startOfDay, ending: endOfDay, calendars: reminderListsToUse
                     )
-                    
+
                     let fetched = await withCheckedContinuation { continuation in
                         eventStore.fetchReminders(matching: predicate) { r in
                             continuation.resume(returning: r ?? [])
                         }
                     }
-                    
+
                     reminders = fetched.map { ReminderModel(from: $0) }
                         .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
                 }

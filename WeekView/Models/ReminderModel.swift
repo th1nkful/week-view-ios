@@ -10,13 +10,13 @@ struct ReminderModel: Identifiable {
     let calendar: EKCalendar
     let calendarItemIdentifier: String
     let calendarColor: Color
-    
+
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter
     }()
-    
+
     init(from ekReminder: EKReminder) {
         self.id = ekReminder.calendarItemIdentifier
         self.title = ekReminder.title ?? "Untitled Reminder"
@@ -26,7 +26,7 @@ struct ReminderModel: Identifiable {
         self.calendarItemIdentifier = ekReminder.calendarItemIdentifier
         self.calendarColor = Color(cgColor: ekReminder.calendar.cgColor)
     }
-    
+
     var dueDateString: String? {
         guard let dueDate = dueDate else { return nil }
         return Self.timeFormatter.string(from: dueDate)

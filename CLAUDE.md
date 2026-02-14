@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a pure Xcode project (no SPM dependencies, no CocoaPods). Build and run using:
 
 ```bash
-xcodebuild -project WeekView.xcodeproj -scheme WeekView -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project WeekView.xcodeproj -scheme WeekView -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' build
 ```
 
 There are no test targets configured. No linter is set up.
