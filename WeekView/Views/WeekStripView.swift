@@ -156,11 +156,12 @@ struct DayButton: View {
             VStack(spacing: 4) {
                 Text(capitalizedDayName)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
                 
                 Text(Self.dateFormatter.string(from: date))
                     .font(.title3)
                     .fontWeight(isSelected ? .bold : .regular)
+                    .foregroundStyle(isSelected ? .white : .primary)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 60)
@@ -168,7 +169,6 @@ struct DayButton: View {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(isSelected ? Color.accentColor : Color.clear)
             )
-            .foregroundStyle(isSelected ? .white : .primary)
         }
     }
 }
