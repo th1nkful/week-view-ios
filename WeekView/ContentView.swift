@@ -19,6 +19,15 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
+                // Bottom layer: scroll view fills full screen
+                InfiniteDayScrollView(
+                    selectedDate: $selectedDate,
+                    calendarViewModel: calendarViewModel,
+                    settingsViewModel: settingsViewModel,
+                    topInset: weekStripSpacerHeight
+                )
+
+                // Top layer: unified glassmorphic header
                 VStack(spacing: 0) {
                     // Month and Year Header (left-aligned)
                     HStack(spacing: 4) {
@@ -46,36 +55,21 @@ struct ContentView: View {
                         } label: {
                             Image(systemName: "gear")
                                 .font(.title2)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(.secondary)
                         }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal)
                     .padding(.top, 8)
                     .padding(.bottom, 4)
-                    .background(Color(uiColor: .systemBackground))
-
-                    // Spacer for week strip overlay
-                    Color.clear
-                        .frame(height: weekStripSpacerHeight)
-
-                    InfiniteDayScrollView(
-                        selectedDate: $selectedDate,
-                        calendarViewModel: calendarViewModel,
-                        settingsViewModel: settingsViewModel
-                    )
-                }
-                .background(Color(uiColor: .systemBackground))
-
-                // Floating week strip overlay
-                VStack(spacing: 0) {
-                    // Month and Year Header height
-                    Color.clear
-                        .frame(height: headerHeight)
 
                     WeekStripView(selectedDate: $selectedDate)
                         .padding(.horizontal)
                         .padding(.top, weekStripTopPadding)
+                        .padding(.bottom, 8)
                 }
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea(edges: .top)
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView(viewModel: settingsViewModel)
@@ -94,6 +88,7 @@ struct InfiniteDayScrollView: View {
     @Binding var selectedDate: Date
     @ObservedObject var calendarViewModel: CalendarViewModel
     @ObservedObject var settingsViewModel: SettingsViewModel
+    var topInset: CGFloat = 0
 
     @State private var visibleDates: [Date] = []
     @State private var loadedEvents: [Date: (events: [EventModel], reminders: [ReminderModel])] = [:]
@@ -219,7 +214,7 @@ struct InfiniteDayScrollView: View {
                 }
             }
         }
-        .padding(.top, 8)
+        .padding(.top, topInset + 8)
     }
 
     private func reloadAllVisibleDates() {
