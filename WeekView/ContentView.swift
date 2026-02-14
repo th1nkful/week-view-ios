@@ -82,6 +82,7 @@ struct ContentView: View {
             }
             .task {
                 await calendarViewModel.requestAccess()
+                settingsViewModel.loadAvailableCalendars()
                 // Don't load events here - let InfiniteDayScrollView handle it after permissions are granted
                 // await weatherViewModel.requestLocationAndLoadWeather()
             }
@@ -174,6 +175,11 @@ struct InfiniteDayScrollView: View {
             .onChange(of: calendarViewModel.hasCalendarAccess) { _, newValue in
                 if newValue && !hasInitializedWithPermissions {
                     hasInitializedWithPermissions = true
+                    reloadAllVisibleDates()
+                }
+            }
+            .onChange(of: calendarViewModel.hasRemindersAccess) { _, newValue in
+                if newValue {
                     reloadAllVisibleDates()
                 }
             }
@@ -453,7 +459,7 @@ struct DaySection: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
             } else {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 8) {
                     if !allDayEvents.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(allDayEvents) { event in
@@ -465,7 +471,7 @@ struct DaySection: View {
 
                     // Combined timed events and reminders, sorted by time
                     if !sortedTimedItems.isEmpty {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 6) {
                             ForEach(sortedTimedItems) { item in
                                 switch item {
                                 case .event(let event):
