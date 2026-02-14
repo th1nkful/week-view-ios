@@ -6,16 +6,16 @@ struct ContentView: View {
     @StateObject private var settingsViewModel = SettingsViewModel()
     @State private var selectedDate = Date()
     @State private var showSettings = false
-    
+
     // Layout constants
     private let headerHeight: CGFloat = 52
     private let weekStripHeight: CGFloat = 76
     private let weekStripTopPadding: CGFloat = 4
-    
+
     private var weekStripSpacerHeight: CGFloat {
         headerHeight + weekStripHeight + weekStripTopPadding + 8
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -53,11 +53,11 @@ struct ContentView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 4)
                     .background(Color(uiColor: .systemBackground))
-                    
+
                     // Spacer for week strip overlay
                     Color.clear
                         .frame(height: weekStripSpacerHeight)
-                    
+
                     InfiniteDayScrollView(
                         selectedDate: $selectedDate,
                         calendarViewModel: calendarViewModel,
@@ -65,13 +65,13 @@ struct ContentView: View {
                     )
                 }
                 .background(Color(uiColor: .systemBackground))
-                
+
                 // Floating week strip overlay
                 VStack(spacing: 0) {
                     // Month and Year Header height
                     Color.clear
                         .frame(height: headerHeight)
-                    
+
                     WeekStripView(selectedDate: $selectedDate)
                         .padding(.horizontal)
                         .padding(.top, weekStripTopPadding)
@@ -93,20 +93,20 @@ struct InfiniteDayScrollView: View {
     @Binding var selectedDate: Date
     @ObservedObject var calendarViewModel: CalendarViewModel
     @ObservedObject var settingsViewModel: SettingsViewModel
-    
+
     @State private var visibleDates: [Date] = []
     @State private var loadedEvents: [Date: (events: [EventModel], reminders: [ReminderModel])] = [:]
     @State private var isLoadingMoreWeeks = false
     @State private var hasInitializedWithPermissions = false
     @State private var scrollPosition: Date?
     @State private var isUserScrolling = false
-    
+
     private var calendar: Calendar {
         var cal = Calendar.current
         cal.firstWeekday = 2 // Monday
         return cal
     }
-    
+
     var body: some View {
         Group {
             if visibleDates.isEmpty {
@@ -126,7 +126,7 @@ struct InfiniteDayScrollView: View {
                                 let dateKey = calendar.startOfDay(for: date)
                                 let eventsForDay = loadedEvents[dateKey]?.events ?? []
                                 let remindersForDay = loadedEvents[dateKey]?.reminders ?? []
-                                
+
                                 DaySection(
                                     date: date,
                                     events: eventsForDay,
@@ -157,16 +157,16 @@ struct InfiniteDayScrollView: View {
                             }
                         }
                     }
-                    .onChange(of: selectedDate) { oldValue, newValue in
+                    .onChange(of: selectedDate) { _, newValue in
                         // Only update scroll position if not already scrolling (user tapped a day)
                         guard !isUserScrolling else { return }
-                        
+
                         // Check if the selected date is in the visible range
                         if !visibleDates.contains(where: { calendar.isDate($0, inSameDayAs: newValue) }) {
                             // Load the week containing the new date
                             loadWeek(containing: newValue)
                         }
-                        
+
                         // Scroll to the selected date
                         scrollPosition = calendar.startOfDay(for: newValue)
                         Task {
@@ -176,27 +176,27 @@ struct InfiniteDayScrollView: View {
                             }
                         }
                     }
-                    .onChange(of: scrollPosition) { oldValue, newValue in
+                    .onChange(of: scrollPosition) { _, newValue in
                         // Update selected date when user scrolls
                         guard let newValue = newValue else { return }
-                        
+
                         isUserScrolling = true
-                        
+
                         // Find the date that matches the scroll position
-                        if let matchingDate = visibleDates.first(where: { 
-                            calendar.startOfDay(for: $0) == newValue 
+                        if let matchingDate = visibleDates.first(where: {
+                            calendar.startOfDay(for: $0) == newValue
                         }) {
                             if !calendar.isDate(selectedDate, inSameDayAs: matchingDate) {
                                 selectedDate = matchingDate
                             }
                         }
-                        
+
                         // Reset the scrolling flag after a short delay
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             isUserScrolling = false
                         }
                     }
-                    .onChange(of: calendarViewModel.hasCalendarAccess) { oldValue, newValue in
+                    .onChange(of: calendarViewModel.hasCalendarAccess) { _, newValue in
                         if newValue && !hasInitializedWithPermissions {
                             hasInitializedWithPermissions = true
                             reloadAllVisibleDates()
@@ -216,7 +216,7 @@ struct InfiniteDayScrollView: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
     }
-    
+
     private func reloadAllVisibleDates() {
         Task {
             // Clear cached events and reload all visible dates
@@ -226,7 +226,7 @@ struct InfiniteDayScrollView: View {
             }
         }
     }
-    
+
     private func loadCurrentWeek() {
         let weekDates = getWeekDates(for: selectedDate)
         visibleDates = weekDates
@@ -235,7 +235,7 @@ struct InfiniteDayScrollView: View {
             let nextWeekDates = getWeekDates(for: nextWeekDate)
             visibleDates.append(contentsOf: nextWeekDates)
         }
-        
+
         // Load events for all loaded weeks
         Task {
             for date in visibleDates {
@@ -243,7 +243,7 @@ struct InfiniteDayScrollView: View {
             }
         }
     }
-    
+
     private func loadWeek(containing date: Date) {
         let weekDates = getWeekDates(for: date)
 
@@ -255,7 +255,7 @@ struct InfiniteDayScrollView: View {
             // Insert dates in chronological order
             visibleDates.append(contentsOf: newDates)
             visibleDates.sort()
-            
+
             // Load events for the new dates
             Task {
                 for weekDate in newDates {
@@ -264,24 +264,24 @@ struct InfiniteDayScrollView: View {
             }
         }
     }
-    
+
     private func handleDayAppear(_ date: Date) {
         let dateStart = calendar.startOfDay(for: date)
-        
+
         // Load events if not already loaded
         if loadedEvents[dateStart] == nil {
             Task {
                 await loadEventsForDate(date)
             }
         }
-        
+
         // Prevent concurrent week loading
         guard !isLoadingMoreWeeks else { return }
-        
+
         // Check if we need to load adjacent weeks
         guard let firstDate = visibleDates.first,
               let lastDate = visibleDates.last else { return }
-        
+
         // Only load more weeks when we're actually at the edges
         // If we're viewing the first day, load the previous week
         if calendar.isDate(date, inSameDayAs: firstDate) {
@@ -294,7 +294,7 @@ struct InfiniteDayScrollView: View {
                 isLoadingMoreWeeks = false
             }
         }
-        
+
         // If we're viewing the last day, load the next week
         if calendar.isDate(date, inSameDayAs: lastDate) {
             isLoadingMoreWeeks = true
@@ -307,7 +307,7 @@ struct InfiniteDayScrollView: View {
             }
         }
     }
-    
+
     private func getWeekDates(for date: Date) -> [Date] {
         let startOfDate = calendar.startOfDay(for: date)
         let weekday = calendar.component(.weekday, from: startOfDate)
@@ -323,7 +323,7 @@ struct InfiniteDayScrollView: View {
             calendar.date(byAdding: .day, value: dayOffset, to: startOfWeek)
         }
     }
-    
+
     private func loadEventsForDate(_ date: Date, forceReload: Bool = false) async {
         let dateStart = calendar.startOfDay(for: date)
         guard forceReload || loadedEvents[dateStart] == nil else { return }
@@ -343,12 +343,12 @@ struct DaySection: View {
     let events: [EventModel]
     let reminders: [ReminderModel]
     let onToggleReminder: (ReminderModel) -> Void
-    
+
     // Enum to represent either an event or reminder for unified display
     enum TimedItem: Identifiable {
         case event(EventModel)
         case reminder(ReminderModel)
-        
+
         var id: String {
             switch self {
             case .event(let event):
@@ -357,7 +357,7 @@ struct DaySection: View {
                 return "reminder_\(reminder.id)"
             }
         }
-        
+
         var sortTime: Date? {
             switch self {
             case .event(let event):
@@ -367,19 +367,19 @@ struct DaySection: View {
             }
         }
     }
-    
+
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE"
         return formatter
     }()
-    
+
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/yyyy"
         return formatter
     }()
-    
+
     private var displayDayName: String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
@@ -390,7 +390,7 @@ struct DaySection: View {
             return Self.dayFormatter.string(from: date).uppercased()
         }
     }
-    
+
     private var allDayEvents: [EventModel] {
         events.filter { $0.isAllDay }
     }
@@ -398,21 +398,21 @@ struct DaySection: View {
     private var timedEvents: [EventModel] {
         events.filter { !$0.isAllDay }
     }
-    
+
     // Combined items sorted by time
     private var sortedTimedItems: [TimedItem] {
         var items: [TimedItem] = []
-        
+
         // Add timed events
         for event in timedEvents {
             items.append(.event(event))
         }
-        
+
         // Add reminders
         for reminder in reminders {
             items.append(.reminder(reminder))
         }
-        
+
         // Sort by time (events by start time, reminders by due date)
         // Items without a time (nil sortTime) are sorted to the end
         // Use id as secondary sort for stable ordering when times are equal

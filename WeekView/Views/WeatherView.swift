@@ -2,7 +2,7 @@ import SwiftUI
 
 struct WeatherView: View {
     @ObservedObject var viewModel: WeatherViewModel
-    
+
     var body: some View {
         Group {
             if let weather = viewModel.weather {
@@ -10,17 +10,17 @@ struct WeatherView: View {
                     Image(systemName: weather.symbolName)
                         .font(.title2)
                         .symbolRenderingMode(.multicolor)
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text(weather.temperatureString)
                             .font(.title3)
                             .fontWeight(.semibold)
-                        
+
                         Text(weather.condition.capitalized)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    
+
                     Spacer()
                 }
                 .padding()

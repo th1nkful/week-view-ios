@@ -3,7 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var viewModel: SettingsViewModel
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -13,11 +13,11 @@ struct SettingsView: View {
                         Text("Week View")
                             .font(.title2)
                             .fontWeight(.bold)
-                        
+
                         Text("A simple and elegant week calendar view for iOS")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        
+
                         Text("Version 1.0.0")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -27,7 +27,7 @@ struct SettingsView: View {
                 } header: {
                     Text("About")
                 }
-                
+
                 // Calendar Selection
                 Section {
                     if viewModel.availableCalendars.isEmpty {
@@ -39,12 +39,12 @@ struct SettingsView: View {
                                 Circle()
                                     .fill(Color(cgColor: calendar.cgColor))
                                     .frame(width: 12, height: 12)
-                                
+
                                 Text(calendar.title)
                                     .font(.body)
-                                
+
                                 Spacer()
-                                
+
                                 if viewModel.selectedCalendarIds.contains(calendar.calendarIdentifier) {
                                     Image(systemName: "checkmark")
                                         .foregroundStyle(.blue)
@@ -61,7 +61,7 @@ struct SettingsView: View {
                 } footer: {
                     Text("Select which calendars to display")
                 }
-                
+
                 // Reminder Lists Selection
                 Section {
                     if viewModel.availableReminderLists.isEmpty {
@@ -73,12 +73,12 @@ struct SettingsView: View {
                                 Circle()
                                     .fill(Color(cgColor: list.cgColor))
                                     .frame(width: 12, height: 12)
-                                
+
                                 Text(list.title)
                                     .font(.body)
-                                
+
                                 Spacer()
-                                
+
                                 if viewModel.selectedReminderListIds.contains(list.calendarIdentifier) {
                                     Image(systemName: "checkmark")
                                         .foregroundStyle(.blue)
@@ -95,7 +95,7 @@ struct SettingsView: View {
                 } footer: {
                     Text("Select which reminder lists to display")
                 }
-                
+
                 // Reminder Options
                 Section {
                     Toggle("Show Completed Reminders", isOn: $viewModel.showCompletedReminders)

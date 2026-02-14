@@ -1,0 +1,33 @@
+# SwiftLint configuration for WeekView
+
+# Only lint project source files
+included:
+  - WeekView
+
+excluded:
+  - WeekView.xcodeproj
+
+# Relax rules that conflict with SwiftUI patterns
+line_length:
+  warning: 150
+  error: 200
+
+file_length:
+  warning: 500
+  error: 1000
+
+function_body_length:
+  warning: 80
+  error: 150
+
+type_body_length:
+  warning: 400
+  error: 800
+
+# SwiftUI views commonly use short names (e.g., "id", "to")
+identifier_name:
+  min_length: 1
+
+# Auto-correct trailing whitespace including blank lines
+trailing_whitespace:
+  ignores_empty_lines: false

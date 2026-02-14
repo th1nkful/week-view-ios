@@ -5,13 +5,13 @@ struct DayView: View {
     let events: [EventModel]
     let reminders: [ReminderModel]
     let onToggleReminder: (ReminderModel) -> Void
-    
+
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .full
         return formatter
     }()
-    
+
     private var allDayEvents: [EventModel] {
         events.filter { $0.isAllDay }
     }

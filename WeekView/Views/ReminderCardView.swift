@@ -5,7 +5,7 @@ struct ReminderCardView: View {
     let reminder: ReminderModel
     let onToggle: () -> Void
     @Environment(\.openURL) private var openURL
-    
+
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             Button {
@@ -16,7 +16,7 @@ struct ReminderCardView: View {
                     .foregroundStyle(reminder.calendarColor)
             }
             .buttonStyle(.plain)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(reminder.title)
                     .font(.body)
@@ -24,7 +24,7 @@ struct ReminderCardView: View {
                     .foregroundStyle(.primary)
                     .strikethrough(reminder.isCompleted)
                     .multilineTextAlignment(.leading)
-                
+
                 if let dueDateString = reminder.dueDateString {
                     HStack {
                         Image(systemName: "clock")
@@ -35,9 +35,9 @@ struct ReminderCardView: View {
                     .foregroundStyle(.secondary)
                 }
             }
-            
+
             Spacer()
-            
+
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
@@ -53,7 +53,7 @@ struct ReminderCardView: View {
             openReminderInApp()
         }
     }
-    
+
     private func openReminderInApp() {
         let urlString = "x-apple-reminderkit://REMCDReminder/\(reminder.calendarItemIdentifier)"
         if let url = URL(string: urlString) {
