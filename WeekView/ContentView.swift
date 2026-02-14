@@ -119,102 +119,101 @@ struct InfiniteDayScrollView: View {
                     loadCurrentWeek()
                 }
             } else {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 0, pinnedViews: []) {
-                            ForEach(visibleDates, id: \.self) { date in
-                                let dateKey = calendar.startOfDay(for: date)
-                                let eventsForDay = loadedEvents[dateKey]?.events ?? []
-                                let remindersForDay = loadedEvents[dateKey]?.reminders ?? []
-
-                                DaySection(
-                                    date: date,
-                                    events: eventsForDay,
-                                    reminders: remindersForDay,
-                                    onToggleReminder: { reminder in
-                                        calendarViewModel.toggleReminder(reminder)
-                                        // Reload events after toggling
-                                        Task {
-                                            await loadEventsForDate(date, forceReload: true)
-                                        }
-                                    }
-                                )
-                                .id(calendar.startOfDay(for: date))
-                                .onAppear {
-                                    handleDayAppear(date)
-                                }
-                            }
-                        }
-                        .padding(.top, 8)
-                    }
-                    .scrollPosition(id: $scrollPosition)
-                    .onAppear {
-                        // Scroll to today when the view first appears
-                        scrollPosition = calendar.startOfDay(for: selectedDate)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            withAnimation {
-                                proxy.scrollTo(calendar.startOfDay(for: selectedDate))
-                            }
-                        }
-                    }
-                    .onChange(of: selectedDate) { _, newValue in
-                        // Only update scroll position if not already scrolling (user tapped a day)
-                        guard !isUserScrolling else { return }
-
-                        // Check if the selected date is in the visible range
-                        if !visibleDates.contains(where: { calendar.isDate($0, inSameDayAs: newValue) }) {
-                            // Load the week containing the new date
-                            loadWeek(containing: newValue)
-                        }
-
-                        // Scroll to the selected date
-                        scrollPosition = calendar.startOfDay(for: newValue)
-                        Task {
-                            try? await Task.sleep(for: .milliseconds(100))
-                            withAnimation {
-                                proxy.scrollTo(calendar.startOfDay(for: newValue))
-                            }
-                        }
-                    }
-                    .onChange(of: scrollPosition) { _, newValue in
-                        // Update selected date when user scrolls
-                        guard let newValue = newValue else { return }
-
-                        isUserScrolling = true
-
-                        // Find the date that matches the scroll position
-                        if let matchingDate = visibleDates.first(where: {
-                            calendar.startOfDay(for: $0) == newValue
-                        }) {
-                            if !calendar.isDate(selectedDate, inSameDayAs: matchingDate) {
-                                selectedDate = matchingDate
-                            }
-                        }
-
-                        // Reset the scrolling flag after a short delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            isUserScrolling = false
-                        }
-                    }
-                    .onChange(of: calendarViewModel.hasCalendarAccess) { _, newValue in
-                        if newValue && !hasInitializedWithPermissions {
-                            hasInitializedWithPermissions = true
-                            reloadAllVisibleDates()
-                        }
-                    }
-                    .onChange(of: settingsViewModel.selectedCalendarIds) { _, _ in
-                        reloadAllVisibleDates()
-                    }
-                    .onChange(of: settingsViewModel.selectedReminderListIds) { _, _ in
-                        reloadAllVisibleDates()
-                    }
-                    .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
-                        reloadAllVisibleDates()
-                    }
-                }
+                scrollContent
             }
         }
         .background(Color(uiColor: .systemGroupedBackground))
+    }
+
+    private var scrollContent: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                dayList
+            }
+            .scrollPosition(id: $scrollPosition)
+            .onAppear {
+                scrollPosition = calendar.startOfDay(for: selectedDate)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation {
+                        proxy.scrollTo(calendar.startOfDay(for: selectedDate))
+                    }
+                }
+            }
+            .onChange(of: selectedDate) { _, newValue in
+                guard !isUserScrolling else { return }
+
+                if !visibleDates.contains(where: { calendar.isDate($0, inSameDayAs: newValue) }) {
+                    loadWeek(containing: newValue)
+                }
+
+                scrollPosition = calendar.startOfDay(for: newValue)
+                Task {
+                    try? await Task.sleep(for: .milliseconds(100))
+                    withAnimation {
+                        proxy.scrollTo(calendar.startOfDay(for: newValue))
+                    }
+                }
+            }
+            .onChange(of: scrollPosition) { _, newValue in
+                guard let newValue = newValue else { return }
+
+                isUserScrolling = true
+
+                if let matchingDate = visibleDates.first(where: {
+                    calendar.startOfDay(for: $0) == newValue
+                }) {
+                    if !calendar.isDate(selectedDate, inSameDayAs: matchingDate) {
+                        selectedDate = matchingDate
+                    }
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    isUserScrolling = false
+                }
+            }
+            .onChange(of: calendarViewModel.hasCalendarAccess) { _, newValue in
+                if newValue && !hasInitializedWithPermissions {
+                    hasInitializedWithPermissions = true
+                    reloadAllVisibleDates()
+                }
+            }
+            .onChange(of: settingsViewModel.selectedCalendarIds) { _, _ in
+                reloadAllVisibleDates()
+            }
+            .onChange(of: settingsViewModel.selectedReminderListIds) { _, _ in
+                reloadAllVisibleDates()
+            }
+            .onChange(of: settingsViewModel.showCompletedReminders) { _, _ in
+                reloadAllVisibleDates()
+            }
+        }
+    }
+
+    private var dayList: some View {
+        LazyVStack(spacing: 0, pinnedViews: []) {
+            ForEach(visibleDates, id: \.self) { date in
+                let dateKey = calendar.startOfDay(for: date)
+                let eventsForDay = loadedEvents[dateKey]?.events ?? []
+                let remindersForDay = loadedEvents[dateKey]?.reminders ?? []
+
+                DaySection(
+                    date: date,
+                    events: eventsForDay,
+                    reminders: remindersForDay,
+                    onToggleReminder: { reminder in
+                        calendarViewModel.toggleReminder(reminder)
+                        Task {
+                            await loadEventsForDate(date, forceReload: true)
+                        }
+                    }
+                )
+                .id(calendar.startOfDay(for: date))
+                .onAppear {
+                    handleDayAppear(date)
+                }
+            }
+        }
+        .padding(.top, 8)
     }
 
     private func reloadAllVisibleDates() {
@@ -328,11 +327,17 @@ struct InfiniteDayScrollView: View {
         let dateStart = calendar.startOfDay(for: date)
         guard forceReload || loadedEvents[dateStart] == nil else { return }
 
-        let result = await calendarViewModel.fetchEvents(
+        // Capture values to avoid property wrapper issues
+        let vm: CalendarViewModel = calendarViewModel
+        let selectedCals = settingsViewModel.selectedCalendarIds
+        let selectedLists = settingsViewModel.selectedReminderListIds
+        let showCompleted = settingsViewModel.showCompletedReminders
+
+        let result = await vm.fetchEvents(
             for: dateStart,
-            selectedCalendarIds: settingsViewModel.selectedCalendarIds,
-            selectedReminderListIds: settingsViewModel.selectedReminderListIds,
-            showCompletedReminders: settingsViewModel.showCompletedReminders
+            selectedCalendarIds: selectedCals,
+            selectedReminderListIds: selectedLists,
+            showCompletedReminders: showCompleted
         )
         loadedEvents[dateStart] = result
     }
