@@ -109,7 +109,7 @@ struct InfiniteDayScrollView: View {
     @ObservedObject var settingsViewModel: SettingsViewModel
     @Environment(\.scenePhase) private var scenePhase
     var topInset: CGFloat = 0
-    var onInitialLoadComplete: () -> Void = {}
+    var onInitialLoadComplete: () -> Void
 
     @State private var visibleDates: [Date] = []
     @State private var loadedEvents: [Date: (events: [EventModel], reminders: [ReminderModel])] = [:]
