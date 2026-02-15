@@ -260,8 +260,10 @@ struct InfiniteDayScrollView: View {
             for date in visibleDates {
                 await loadEventsForDate(date)
             }
-            // Signal that initial load is complete
-            onInitialLoadComplete()
+            // Signal that initial load is complete on main actor
+            await MainActor.run {
+                onInitialLoadComplete()
+            }
         }
     }
 
