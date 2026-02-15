@@ -6,6 +6,7 @@ struct ContentView: View {
     @StateObject private var settingsViewModel = SettingsViewModel()
     @State private var selectedDate = Date()
     @State private var showSettings = false
+    @State private var isInitialLoading = true
 
     // Layout constants
     private let headerHeight: CGFloat = 52
@@ -23,58 +24,70 @@ struct ContentView: View {
                 Color(uiColor: .systemGroupedBackground)
                     .ignoresSafeArea()
 
-                // Scroll view with transparent background
-                InfiniteDayScrollView(
-                    selectedDate: $selectedDate,
-                    calendarViewModel: calendarViewModel,
-                    settingsViewModel: settingsViewModel,
-                    topInset: weekStripSpacerHeight
-                )
-
-                // Top layer: single glass panel for header + week strip
-                VStack(spacing: 0) {
-                    HStack(spacing: 4) {
-                        HStack(spacing: 4) {
-                            Text(selectedDate.formatted(.dateTime.month(.wide)))
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.primary)
-                                .textCase(.uppercase)
-
-                            Text(selectedDate.formatted(.dateTime.year()))
-                                .font(.title2)
-                                .fontWeight(.regular)
-                                .foregroundStyle(.red)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedDate = Date()
-                        }
-
-                        Spacer()
-
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Image(systemName: "gear")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
+                if isInitialLoading {
+                    // Loading screen
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Loading...")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 12)
-                    .padding(.bottom, 4)
+                } else {
+                    // Scroll view with transparent background
+                    InfiniteDayScrollView(
+                        selectedDate: $selectedDate,
+                        calendarViewModel: calendarViewModel,
+                        settingsViewModel: settingsViewModel,
+                        topInset: weekStripSpacerHeight,
+                        onInitialLoadComplete: { isInitialLoading = false }
+                    )
 
-                    WeekStripView(selectedDate: $selectedDate)
+                    // Top layer: single glass panel for header + week strip
+                    VStack(spacing: 0) {
+                        HStack(spacing: 4) {
+                            HStack(spacing: 4) {
+                                Text(selectedDate.formatted(.dateTime.month(.wide)))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.primary)
+                                    .textCase(.uppercase)
+
+                                Text(selectedDate.formatted(.dateTime.year()))
+                                    .font(.title2)
+                                    .fontWeight(.regular)
+                                    .foregroundStyle(.red)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedDate = Date()
+                            }
+
+                            Spacer()
+
+                            Button {
+                                showSettings = true
+                            } label: {
+                                Image(systemName: "gear")
+                                    .font(.title2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
                         .padding(.horizontal)
-                        .padding(.top, weekStripTopPadding)
-                        .padding(.bottom, 8)
-                }
-                .background {
-                    UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16)
-                        .fill(.ultraThinMaterial)
-                        .ignoresSafeArea(edges: .top)
+                        .padding(.top, 12)
+                        .padding(.bottom, 4)
+
+                        WeekStripView(selectedDate: $selectedDate)
+                            .padding(.horizontal)
+                            .padding(.top, weekStripTopPadding)
+                            .padding(.bottom, 8)
+                    }
+                    .background {
+                        UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16)
+                            .fill(.ultraThinMaterial)
+                            .ignoresSafeArea(edges: .top)
+                    }
                 }
             }
             .sheet(isPresented: $showSettings) {
@@ -96,6 +109,7 @@ struct InfiniteDayScrollView: View {
     @ObservedObject var settingsViewModel: SettingsViewModel
     @Environment(\.scenePhase) private var scenePhase
     var topInset: CGFloat = 0
+    var onInitialLoadComplete: () -> Void = {}
 
     @State private var visibleDates: [Date] = []
     @State private var loadedEvents: [Date: (events: [EventModel], reminders: [ReminderModel])] = [:]
@@ -113,14 +127,10 @@ struct InfiniteDayScrollView: View {
     var body: some View {
         Group {
             if visibleDates.isEmpty {
-                VStack {
-                    ProgressView("Loading...")
-                        .padding()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onAppear {
-                    loadCurrentWeek()
-                }
+                Color.clear
+                    .onAppear {
+                        loadCurrentWeek()
+                    }
             } else {
                 scrollContent
             }
@@ -246,9 +256,12 @@ struct InfiniteDayScrollView: View {
         scrollPosition = calendar.startOfDay(for: selectedDate)
 
         Task {
+            // Load events for all visible dates
             for date in visibleDates {
                 await loadEventsForDate(date)
             }
+            // Signal that initial load is complete
+            onInitialLoadComplete()
         }
     }
 
