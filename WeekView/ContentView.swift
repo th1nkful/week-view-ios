@@ -24,8 +24,18 @@ struct ContentView: View {
                 Color(uiColor: .systemGroupedBackground)
                     .ignoresSafeArea()
 
+                // Scroll view with transparent background
+                InfiniteDayScrollView(
+                    selectedDate: $selectedDate,
+                    calendarViewModel: calendarViewModel,
+                    settingsViewModel: settingsViewModel,
+                    topInset: weekStripSpacerHeight,
+                    onInitialLoadComplete: { isInitialLoading = false }
+                )
+                .opacity(isInitialLoading ? 0 : 1)
+
+                // Loading screen overlay
                 if isInitialLoading {
-                    // Loading screen
                     VStack(spacing: 16) {
                         ProgressView()
                             .scaleEffect(1.5)
@@ -33,35 +43,22 @@ struct ContentView: View {
                             .font(.headline)
                             .foregroundStyle(.secondary)
                     }
-                } else {
-                    // Scroll view with transparent background
-                    InfiniteDayScrollView(
-                        selectedDate: $selectedDate,
-                        calendarViewModel: calendarViewModel,
-                        settingsViewModel: settingsViewModel,
-                        topInset: weekStripSpacerHeight,
-                        onInitialLoadComplete: { isInitialLoading = false }
-                    )
+                }
 
-                    // Top layer: single glass panel for header + week strip
+                // Top layer: single glass panel for header + week strip
+                if !isInitialLoading {
                     VStack(spacing: 0) {
                         HStack(spacing: 4) {
-                            HStack(spacing: 4) {
-                                Text(selectedDate.formatted(.dateTime.month(.wide)))
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.primary)
-                                    .textCase(.uppercase)
+                            Text(selectedDate.formatted(.dateTime.month(.wide)))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                                .textCase(.uppercase)
 
-                                Text(selectedDate.formatted(.dateTime.year()))
-                                    .font(.title2)
-                                    .fontWeight(.regular)
-                                    .foregroundStyle(.red)
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedDate = Date()
-                            }
+                            Text(selectedDate.formatted(.dateTime.year()))
+                                .font(.title2)
+                                .fontWeight(.regular)
+                                .foregroundStyle(.red)
 
                             Spacer()
 
@@ -73,6 +70,10 @@ struct ContentView: View {
                                     .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.plain)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedDate = Date()
                         }
                         .padding(.horizontal)
                         .padding(.top, 12)
@@ -109,7 +110,7 @@ struct InfiniteDayScrollView: View {
     @ObservedObject var settingsViewModel: SettingsViewModel
     @Environment(\.scenePhase) private var scenePhase
     var topInset: CGFloat = 0
-    var onInitialLoadComplete: () -> Void
+    var onInitialLoadComplete: (() -> Void)? = nil
 
     @State private var visibleDates: [Date] = []
     @State private var loadedEvents: [Date: (events: [EventModel], reminders: [ReminderModel])] = [:]
@@ -262,7 +263,7 @@ struct InfiniteDayScrollView: View {
             }
             // Signal that initial load is complete on main actor
             await MainActor.run {
-                onInitialLoadComplete()
+                onInitialLoadComplete?()
             }
         }
     }
