@@ -49,16 +49,22 @@ struct ContentView: View {
                 if !isInitialLoading {
                     VStack(spacing: 0) {
                         HStack(spacing: 4) {
-                            Text(selectedDate.formatted(.dateTime.month(.wide)))
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.primary)
-                                .textCase(.uppercase)
+                            HStack(spacing: 4) {
+                                Text(selectedDate.formatted(.dateTime.month(.wide)))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.primary)
+                                    .textCase(.uppercase)
 
-                            Text(selectedDate.formatted(.dateTime.year()))
-                                .font(.title2)
-                                .fontWeight(.regular)
-                                .foregroundStyle(.red)
+                                Text(selectedDate.formatted(.dateTime.year()))
+                                    .font(.title2)
+                                    .fontWeight(.regular)
+                                    .foregroundStyle(.red)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedDate = Date()
+                            }
 
                             Spacer()
 
@@ -70,10 +76,6 @@ struct ContentView: View {
                                     .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.plain)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedDate = Date()
                         }
                         .padding(.horizontal)
                         .padding(.top, 12)
