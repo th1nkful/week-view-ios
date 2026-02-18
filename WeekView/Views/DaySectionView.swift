@@ -1,10 +1,55 @@
 import SwiftUI
 
+struct DaySectionHeader: View {
+    let date: Date
+
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE"
+        return formatter
+    }()
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter
+    }()
+
+    private var displayDayName: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "TODAY"
+        } else if calendar.isDateInTomorrow(date) {
+            return "TOMORROW"
+        } else {
+            return Self.dayFormatter.string(from: date).uppercased()
+        }
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(displayDayName)
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundStyle(Calendar.current.isDateInToday(date) ? .blue : .primary)
+
+            Text(Self.dateFormatter.string(from: date))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal)
+        .padding(.top)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(uiColor: .systemGroupedBackground))
+    }
+}
+
 struct DaySection: View {
     let date: Date
     let events: [EventModel]
     let reminders: [ReminderModel]
     let onToggleReminder: (ReminderModel) -> Void
+    let showsHeader: Bool = true
 
     // Enum to represent either an event or reminder for unified display
     enum TimedItem: Identifiable {
@@ -27,29 +72,6 @@ struct DaySection: View {
             case .reminder(let reminder):
                 return reminder.dueDate
             }
-        }
-    }
-
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
-        return formatter
-    }()
-
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yyyy"
-        return formatter
-    }()
-
-    private var displayDayName: String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            return "TODAY"
-        } else if calendar.isDateInTomorrow(date) {
-            return "TOMORROW"
-        } else {
-            return Self.dayFormatter.string(from: date).uppercased()
         }
     }
 
@@ -90,18 +112,9 @@ struct DaySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(displayDayName)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Calendar.current.isDateInToday(date) ? .blue : .primary)
-
-                Text(Self.dateFormatter.string(from: date))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            if showsHeader {
+                DaySectionHeader(date: date)
             }
-            .padding(.horizontal)
-            .padding(.top)
 
             if events.isEmpty && reminders.isEmpty {
                 Text("NO EVENTS OR REMINDERS")

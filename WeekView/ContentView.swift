@@ -202,26 +202,31 @@ struct InfiniteDayScrollView: View {
     }
 
     private var dayList: some View {
-        LazyVStack(spacing: 0, pinnedViews: []) {
+        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
             ForEach(visibleDates, id: \.self) { date in
                 let dateKey = calendar.startOfDay(for: date)
                 let eventsForDay = loadedEvents[dateKey]?.events ?? []
                 let remindersForDay = loadedEvents[dateKey]?.reminders ?? []
 
-                DaySection(
-                    date: date,
-                    events: eventsForDay,
-                    reminders: remindersForDay,
-                    onToggleReminder: { reminder in
-                        calendarViewModel.toggleReminder(reminder)
-                        Task {
-                            await loadEventsForDate(date, forceReload: true)
-                        }
+                Section {
+                    DaySection(
+                        date: date,
+                        events: eventsForDay,
+                        reminders: remindersForDay,
+                        onToggleReminder: { reminder in
+                            calendarViewModel.toggleReminder(reminder)
+                            Task {
+                                await loadEventsForDate(date, forceReload: true)
+                            }
+                        },
+                        showsHeader: false
+                    )
+                    .id(calendar.startOfDay(for: date))
+                    .onAppear {
+                        handleDayAppear(date)
                     }
-                )
-                .id(calendar.startOfDay(for: date))
-                .onAppear {
-                    handleDayAppear(date)
+                } header: {
+                    DaySectionHeader(date: date)
                 }
             }
         }
