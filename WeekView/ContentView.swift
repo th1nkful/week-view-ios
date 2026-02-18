@@ -6,6 +6,7 @@ struct ContentView: View {
     @StateObject private var settingsViewModel = SettingsViewModel()
     @State private var selectedDate = Date()
     @State private var showSettings = false
+    @State private var isInitialLoading = true
 
     // Layout constants
     private let headerHeight: CGFloat = 52
@@ -28,53 +29,68 @@ struct ContentView: View {
                     selectedDate: $selectedDate,
                     calendarViewModel: calendarViewModel,
                     settingsViewModel: settingsViewModel,
-                    topInset: weekStripSpacerHeight
+                    topInset: weekStripSpacerHeight,
+                    onInitialLoadComplete: { isInitialLoading = false }
                 )
+                .opacity(isInitialLoading ? 0 : 1)
+
+                // Loading screen overlay
+                if isInitialLoading {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Loading...")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
                 // Top layer: single glass panel for header + week strip
-                VStack(spacing: 0) {
-                    HStack(spacing: 4) {
+                if !isInitialLoading {
+                    VStack(spacing: 0) {
                         HStack(spacing: 4) {
-                            Text(selectedDate.formatted(.dateTime.month(.wide)))
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.primary)
-                                .textCase(.uppercase)
+                            HStack(spacing: 4) {
+                                Text(selectedDate.formatted(.dateTime.month(.wide)))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.primary)
+                                    .textCase(.uppercase)
 
-                            Text(selectedDate.formatted(.dateTime.year()))
-                                .font(.title2)
-                                .fontWeight(.regular)
-                                .foregroundStyle(.red)
+                                Text(selectedDate.formatted(.dateTime.year()))
+                                    .font(.title2)
+                                    .fontWeight(.regular)
+                                    .foregroundStyle(.red)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedDate = Date()
+                            }
+
+                            Spacer()
+
+                            Button {
+                                showSettings = true
+                            } label: {
+                                Image(systemName: "gear")
+                                    .font(.title2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedDate = Date()
-                        }
-
-                        Spacer()
-
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Image(systemName: "gear")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 12)
-                    .padding(.bottom, 4)
-
-                    WeekStripView(selectedDate: $selectedDate)
                         .padding(.horizontal)
-                        .padding(.top, weekStripTopPadding)
-                        .padding(.bottom, 8)
-                }
-                .background {
-                    UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16)
-                        .fill(.ultraThinMaterial)
-                        .ignoresSafeArea(edges: .top)
+                        .padding(.top, 12)
+                        .padding(.bottom, 4)
+
+                        WeekStripView(selectedDate: $selectedDate)
+                            .padding(.horizontal)
+                            .padding(.top, weekStripTopPadding)
+                            .padding(.bottom, 8)
+                    }
+                    .background {
+                        UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16)
+                            .fill(.ultraThinMaterial)
+                            .ignoresSafeArea(edges: .top)
+                    }
                 }
             }
             .sheet(isPresented: $showSettings) {
@@ -96,6 +112,7 @@ struct InfiniteDayScrollView: View {
     @ObservedObject var settingsViewModel: SettingsViewModel
     @Environment(\.scenePhase) private var scenePhase
     var topInset: CGFloat = 0
+    var onInitialLoadComplete: (() -> Void)?
 
     @State private var visibleDates: [Date] = []
     @State private var loadedEvents: [Date: (events: [EventModel], reminders: [ReminderModel])] = [:]
@@ -113,14 +130,10 @@ struct InfiniteDayScrollView: View {
     var body: some View {
         Group {
             if visibleDates.isEmpty {
-                VStack {
-                    ProgressView("Loading...")
-                        .padding()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onAppear {
-                    loadCurrentWeek()
-                }
+                Color.clear
+                    .onAppear {
+                        loadCurrentWeek()
+                    }
             } else {
                 scrollContent
             }
@@ -246,8 +259,13 @@ struct InfiniteDayScrollView: View {
         scrollPosition = calendar.startOfDay(for: selectedDate)
 
         Task {
+            // Load events for all visible dates
             for date in visibleDates {
                 await loadEventsForDate(date)
+            }
+            // Signal that initial load is complete on main actor
+            await MainActor.run {
+                onInitialLoadComplete?()
             }
         }
     }
@@ -356,154 +374,6 @@ struct InfiniteDayScrollView: View {
             showCompletedReminders: showCompleted
         )
         loadedEvents[dateStart] = result
-    }
-}
-
-struct DaySection: View {
-    let date: Date
-    let events: [EventModel]
-    let reminders: [ReminderModel]
-    let onToggleReminder: (ReminderModel) -> Void
-
-    // Enum to represent either an event or reminder for unified display
-    enum TimedItem: Identifiable {
-        case event(EventModel)
-        case reminder(ReminderModel)
-
-        var id: String {
-            switch self {
-            case .event(let event):
-                return "event_\(event.id)"
-            case .reminder(let reminder):
-                return "reminder_\(reminder.id)"
-            }
-        }
-
-        var sortTime: Date? {
-            switch self {
-            case .event(let event):
-                return event.startDate
-            case .reminder(let reminder):
-                return reminder.dueDate
-            }
-        }
-    }
-
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
-        return formatter
-    }()
-
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yyyy"
-        return formatter
-    }()
-
-    private var displayDayName: String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            return "TODAY"
-        } else if calendar.isDateInTomorrow(date) {
-            return "TOMORROW"
-        } else {
-            return Self.dayFormatter.string(from: date).uppercased()
-        }
-    }
-
-    private var allDayEvents: [EventModel] {
-        events.filter { $0.isAllDay }
-    }
-
-    private var timedEvents: [EventModel] {
-        events.filter { !$0.isAllDay }
-    }
-
-    // Combined items sorted by time
-    private var sortedTimedItems: [TimedItem] {
-        var items: [TimedItem] = []
-
-        // Add timed events
-        for event in timedEvents {
-            items.append(.event(event))
-        }
-
-        // Add reminders
-        for reminder in reminders {
-            items.append(.reminder(reminder))
-        }
-
-        // Sort by time (events by start time, reminders by due date)
-        // Items without a time (nil sortTime) are sorted to the end
-        // Use id as secondary sort for stable ordering when times are equal
-        return items.sorted { item1, item2 in
-            let time1 = item1.sortTime ?? Date.distantFuture
-            let time2 = item2.sortTime ?? Date.distantFuture
-            if time1 == time2 {
-                return item1.id < item2.id
-            }
-            return time1 < time2
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(displayDayName)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Calendar.current.isDateInToday(date) ? .blue : .primary)
-
-                Text(Self.dateFormatter.string(from: date))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal)
-            .padding(.top)
-
-            if events.isEmpty && reminders.isEmpty {
-                Text("NO EVENTS OR REMINDERS")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-            } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    if !allDayEvents.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(allDayEvents) { event in
-                                AllDayEventPillView(event: event)
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 4)
-                    }
-
-                    // Combined timed events and reminders, sorted by time
-                    if !sortedTimedItems.isEmpty {
-                        VStack(alignment: .leading, spacing: 0) {
-                            ForEach(sortedTimedItems) { item in
-                                switch item {
-                                case .event(let event):
-                                    EventCardView(event: event)
-                                        .padding(.horizontal, 8)
-                                case .reminder(let reminder):
-                                    ReminderCardView(reminder: reminder) {
-                                        onToggleReminder(reminder)
-                                    }
-                                    .padding(.horizontal, 8)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Divider()
-                .background(Color(uiColor: .separator))
-                .padding(.top, 6)
-        }
     }
 }
 

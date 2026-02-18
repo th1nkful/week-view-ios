@@ -24,6 +24,7 @@
 		015 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116 /* SettingsView.swift */; };
 		016 /* CalendarSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117 /* CalendarSettingsView.swift */; };
 		017 /* ReminderSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118 /* ReminderSettingsView.swift */; };
+		018 /* DaySectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119 /* DaySectionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +47,7 @@
 		116 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		117 /* CalendarSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSettingsView.swift; sourceTree = "<group>"; };
 		118 /* ReminderSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSettingsView.swift; sourceTree = "<group>"; };
+		119 /* DaySectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaySectionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +116,7 @@
 			children = (
 				109 /* WeekStripView.swift */,
 				110 /* DayView.swift */,
+				119 /* DaySectionView.swift */,
 				111 /* EventCardView.swift */,
 				112 /* ReminderCardView.swift */,
 				113 /* WeatherView.swift */,
@@ -202,6 +205,7 @@
 				008 /* WeatherModel.swift in Sources */,
 				009 /* WeekStripView.swift in Sources */,
 				010 /* DayView.swift in Sources */,
+				018 /* DaySectionView.swift in Sources */,
 				011 /* EventCardView.swift in Sources */,
 				012 /* ReminderCardView.swift in Sources */,
 				013 /* WeatherView.swift in Sources */,
