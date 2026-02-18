@@ -3,6 +3,12 @@ import SwiftUI
 struct DaySectionHeader: View {
     let date: Date
 
+    private var calendar: Calendar { .current }
+
+    private var isToday: Bool {
+        calendar.isDateInToday(date)
+    }
+
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE"
@@ -16,8 +22,7 @@ struct DaySectionHeader: View {
     }()
 
     private var displayDayName: String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
+        if isToday {
             return "TODAY"
         } else if calendar.isDateInTomorrow(date) {
             return "TOMORROW"
@@ -31,7 +36,7 @@ struct DaySectionHeader: View {
             Text(displayDayName)
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundStyle(Calendar.current.isDateInToday(date) ? .blue : .primary)
+                .foregroundStyle(isToday ? .blue : .primary)
 
             Text(Self.dateFormatter.string(from: date))
                 .font(.subheadline)
@@ -39,6 +44,7 @@ struct DaySectionHeader: View {
         }
         .padding(.horizontal)
         .padding(.top)
+        .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(uiColor: .systemGroupedBackground))
     }
